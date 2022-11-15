@@ -1,0 +1,45 @@
+#define driverPin1 5
+#define driverPin2 6
+
+int state = 0;     // State Machine for mode method
+int Motion = 0;    // State Machone for motion direction
+bool Change = true; // Check if a state change occurs
+
+int leftPos = 127;     // Analog Write Vals
+int rightPos = 127;     // Analog Write Vals
+int speedd = 1;     // Speed
+int timing = 3;    // Timing [Delay] within the Action function (Not sure if we need it)
+int SpeeddMin = 1;  // Speed Min
+int SpeeddMax = 10; // Speed Max
+
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(driverPin1, OUTPUT);
+  pinMode(driverPin2, OUTPUT);
+  analogWrite(driverPin1, leftPos);
+  analogWrite(driverPin2, rightPos);
+}
+
+void loop() {
+  for(int i=0; i<75; i++) {
+    rightPos++;
+    analogWrite(driverPin2, rightPos);
+    delay(4);
+    Serial.print("Left Pos: ");
+    Serial.print(leftPos);
+    Serial.print("Right Pos: ");
+    Serial.println(rightPos);
+  }
+  delay(5000);
+  for(int i=0; i<75; i++) {
+    rightPos--;
+    analogWrite(driverPin2, rightPos);
+    delay(4);
+    Serial.print("Left Pos: ");
+    Serial.println(leftPos);
+    Serial.print("Right Pos: ");
+    Serial.println(rightPos);
+  }
+  delay(5000);
+}
