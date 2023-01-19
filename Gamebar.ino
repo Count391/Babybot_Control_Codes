@@ -1,36 +1,36 @@
-int currentLED = 0;
-int nextLED = 0;
+int currentLED = 0;                             //Variable for next LED display instruction
+int nextLED = 0;                                //Variable for current LED display instruction
 
 void setup() {
   int pinNumber = 22;
-  while(pinNumber <= 27){
+  while(pinNumber <= 26){
     pinMode(pinNumber, INPUT_PULLUP); 
-    pinNumber = pinNumber + 1;
-  }      
-  while(pinNumber <= 33){
+    pinNumber++;
+  }                                             //Set the input pins
+  while(pinNumber <= 31){
     pinMode(pinNumber, OUTPUT);
-    pinNumber = pinNumber + 1;
-  }
-  randomSeed(analogRead(A0)); 
-  nextLED = random(1, 7);
+    pinNumber++;
+  }                                             //Set the output pins
+  randomSeed(analogRead(A0));                   //Generate random lighting pattern
+  nextLED = random(1, 6);                       //Initialize the LED pattern
 }
 
 void loop() {
-  if(currentLED != nextLED){
-    digitalWrite((currentLED + 27), LOW);
+  if(currentLED != nextLED){                    //Blinking for the LED pattern change
+    digitalWrite((currentLED + 26), LOW);
     delay(250);
-    digitalWrite((currentLED + 27), HIGH);
+    digitalWrite((currentLED + 26), HIGH);
     delay(1000);
-    digitalWrite((currentLED + 27), LOW);
+    digitalWrite((currentLED + 26), LOW);
     delay(250);
-    digitalWrite((currentLED + 27), HIGH);
+    digitalWrite((currentLED + 26), HIGH);
     delay(1000);
-    digitalWrite((currentLED + 27), LOW);
+    digitalWrite((currentLED + 26), LOW);
     currentLED = nextLED;
-    digitalWrite((currentLED + 27), HIGH);
+    digitalWrite((currentLED + 26), HIGH);
   }
-  if(!digitalRead(22)||currentLED == 1){
-    nextLED = random(1, 7);
+  if(!digitalRead(22)||currentLED == 1){        //Check input against target
+    nextLED = random(1, 7);                     //Change pattern if input matches target
   }else if(!digitalRead(23)||currentLED == 2){
     nextLED = random(1, 7);
   }else if(!digitalRead(24)||currentLED == 3){
