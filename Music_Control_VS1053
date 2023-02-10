@@ -1,0 +1,36 @@
+ #include <Adafruit_VS1053.h>
+#include <SD.h>
+
+#define CARDCS 4
+#define DREQ 3
+Adafruit_VS1053_FilePlayer musicPlayer = 
+  Adafruit_VS1053_FilePlayer(11, 13, 10, 9, DREQ, CARDCS);
+
+void setup() {
+  Serial.begin(9600);
+  Serial.println("Adafruit VS1053 Simple Test");
+
+  if (! musicPlayer.begin()) {
+    Serial.println(F("Couldn't find VS1053, do you have the right pins defined?"));
+    while (1);
+  }
+  Serial.println(F("VS1053 found"));
+
+  if (!SD.begin(CARDCS)) {
+    Serial.println(F("SD failed, or not present"));
+    while (1); 
+  }
+  Serial.println(F("SD OK!"));
+
+  musicPlayer.sineTest(0x44, 500);   
+  delay(1000);
+  musicPlayer.setVolume(20, 20);
+}
+
+void loop() {
+  if (! musicPlayer.playFullFile("test.mp3")) {
+    Serial.println(F("Failed playing file"));
+  }
+  Serial.println(F("Finished!"));
+  delay(1000);
+}
