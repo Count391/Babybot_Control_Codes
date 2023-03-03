@@ -1,7 +1,7 @@
 #include <Encoder.h> // Library for the rotary encoder
 
 // Initialize the rotary encoder with its 2 pins
-Encoder myEnc(2, 3); 
+Encoder myEnc(2, 3);
 
 int enablePin = 22; // Pin for the "enable" variable
 int pausePin = 23; // Pin for the "pause" variable
@@ -9,10 +9,14 @@ int time = 0; // Variable to store the time value
 int intensity = 0; // Variable to store the intensity value
 bool enable = 0; // Variable to store the state of "enable" (1 = enabled, 0 = disabled)
 bool pause = 0; // Variable to store the state of "pause" (1 = paused, 0 = not paused)
+int angle = 1; // Variable to store the angle value (1 = angle A, 2 = angle B, 3 = angle C)
 
 void setup() {
   pinMode(enablePin, INPUT_PULLUP); // Set the "enable" pin as an input with a pull-up resistor
   pinMode(pausePin, INPUT_PULLUP); // Set the "pause" pin as an input with a pull-up resistor
+  pinMode(4, INPUT_PULLUP); // Set pin 4 as an input with a pull-up resistor
+  pinMode(5, INPUT_PULLUP); // Set pin 5 as an input with a pull-up resistor
+  pinMode(6, INPUT_PULLUP); // Set pin 6 as an input with a pull-up resistor
 }
 
 void loop() {
@@ -36,6 +40,17 @@ void loop() {
     pause = 1;
   }
 
+  // Check the state of pins 4, 5, and 6 to determine the angle value
+  if (digitalRead(4) == HIGH) {
+    angle = 1;
+  }
+  else if (digitalRead(5) == HIGH) {
+    angle = 2;
+  }
+  else if (digitalRead(6) == HIGH) {
+    angle = 3;
+  }
+
   // If the "enable" variable is set to 1, process the input from the rotary encoder
   if (enable == 1) {
     // Read the position of the rotary encoder
@@ -56,10 +71,4 @@ void loop() {
     }
   }
 
-  // If the "enable" variable is set to 0, do not take any input from the user except the "enable" pin
-  else {
-    // Reset the values of "time" and "intensity" to 0
-    time = 0;
-    intensity = 0;
-  }
-}
+  //
