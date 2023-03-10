@@ -1,74 +1,91 @@
-#include <Encoder.h> // Library for the rotary encoder
+// Assigning pins
+int outputAngle = 5;
+int outputSpeed = 6;
+int enablePin = 7;
+int startPin = 8;
+int timeUpPin = 9;
+int timeDownPin = 10;
+int angle1Pin = 11;
+int angle2Pin = 12;
+int angle3Pin = 13;
+int speed1Pin = A0;
+int speed2Pin = A1;
+int speed3Pin = A2;
+int autoPin = A3;
 
-// Initialize the rotary encoder with its 2 pins
-Encoder myEnc(2, 3);
+// Initializing variables
+int outputAngleValue = 0;
+int outputSpeedValue = 0;
+int time = 0;
 
-int enablePin = 22; // Pin for the "enable" variable
-int pausePin = 23; // Pin for the "pause" variable
-int time = 0; // Variable to store the time value
-int intensity = 0; // Variable to store the intensity value
-bool enable = 0; // Variable to store the state of "enable" (1 = enabled, 0 = disabled)
-bool pause = 0; // Variable to store the state of "pause" (1 = paused, 0 = not paused)
-int angle = 1; // Variable to store the angle value (1 = angle A, 2 = angle B, 3 = angle C)
-
+// Setup function
 void setup() {
-  pinMode(enablePin, INPUT_PULLUP); // Set the "enable" pin as an input with a pull-up resistor
-  pinMode(pausePin, INPUT_PULLUP); // Set the "pause" pin as an input with a pull-up resistor
-  pinMode(4, INPUT_PULLUP); // Set pin 4 as an input with a pull-up resistor
-  pinMode(5, INPUT_PULLUP); // Set pin 5 as an input with a pull-up resistor
-  pinMode(6, INPUT_PULLUP); // Set pin 6 as an input with a pull-up resistor
+  pinMode(outputAngle, OUTPUT);
+  pinMode(outputSpeed, OUTPUT);
+  pinMode(enablePin, INPUT_PULLUP);
+  pinMode(startPin, INPUT_PULLUP);
+  pinMode(timeUpPin, INPUT_PULLUP);
+  pinMode(timeDownPin, INPUT_PULLUP);
+  pinMode(angle1Pin, INPUT_PULLUP);
+  pinMode(angle2Pin, INPUT_PULLUP);
+  pinMode(angle3Pin, INPUT_PULLUP);
+  pinMode(speed1Pin, INPUT_PULLUP);
+  pinMode(speed2Pin, INPUT_PULLUP);
+  pinMode(speed3Pin, INPUT_PULLUP);
+  pinMode(autoPin, INPUT_PULLUP);
 }
 
+// Loop function
 void loop() {
-  // Read the state of the "enable" variable from pin 22
-  int enableState = digitalRead(enablePin);
-  // If the button is pressed and the state of "enable" is changing, toggle the "enable" variable
-  if (enableState == LOW && enable == 1) {
-    enable = 0;
-  }
-  else if (enableState == LOW && enable == 0) {
-    enable = 1;
-  }
-
-  // Read the state of the "pause" variable from pin 23
-  int pauseState = digitalRead(pausePin);
-  // If the button is pressed and the state of "pause" is changing, toggle the "pause" variable
-  if (pauseState == LOW && pause == 1) {
-    pause = 0;
-  }
-  else if (pauseState == LOW && pause == 0) {
-    pause = 1;
-  }
-
-  // Check the state of pins 4, 5, and 6 to determine the angle value
-  if (digitalRead(4) == HIGH) {
-    angle = 1;
-  }
-  else if (digitalRead(5) == HIGH) {
-    angle = 2;
-  }
-  else if (digitalRead(6) == HIGH) {
-    angle = 3;
-  }
-
-  // If the "enable" variable is set to 1, process the input from the rotary encoder
-  if (enable == 1) {
-    // Read the position of the rotary encoder
-    int encoderValue = myEnc.read();
-    // If the encoder has been turned, update the "time" variable
-    if (encoderValue != 0) {
-      time += encoderValue;
+  // Check if enable pin is 1
+  if (digitalRead(enablePin) == 1) {
+    // Check angle pins
+    if (digitalRead(angle1Pin) == 1) {
+      outputAngleValue = 1;
+    } else if (digitalRead(angle2Pin) == 1) {
+      outputAngleValue = 2;
+    } else if (digitalRead(angle3Pin) == 1) {
+      outputAngleValue = 3;
     }
-
-    // Check if the rotary encoder has been pushed
-    if (digitalRead(4) == LOW) {
-      // If pushed, set "intensity" to the current value of "time"
-      intensity = time;
-      // Limit the value of "intensity" to 5
-      if (intensity > 5) {
-        intensity = 5;
+    // Check speed pins
+    if (digitalRead(speed1Pin) == 1) {
+      outputSpeedValue = 1;
+    } else if (digitalRead(speed2Pin) == 1) {
+      outputSpeedValue = 2;
+    } else if (digitalRead(speed3Pin) == 1) {
+      outputSpeedValue = 3;
+    }
+    // Check timeUp pin
+    if (digitalRead(timeUpPin) == 1) {
+      if (time < 600) {
+        time += 1;
+      }
+    }
+    // Check timeDown pin
+    if (digitalRead(timeDownPin) == 1) {
+      if (time > 0) {
+        time -= 1;
+      }
+    }
+    // Check start pin
+    if (digitalRead(startPin) == 1) {
+      // Check if time is larger than 0
+      if (time > 0) {
+        // Check if auto pin is 1
+        if (digitalRead(autoPin) == 1) {
+          Serial.println("Output");
+          // Check if enable pin is 1
+          while (digitalRead(enablePin) == 1) {
+            // Wait for enable pin to become 0
+          }
+        } else {
+          Serial.println("Gamebar");
+          // Check if enable pin is 1
+          while (digitalRead(enablePin) == 1) {
+            // Wait for enable pin to become 0
+          }
+        }
       }
     }
   }
-
-  //
+}
