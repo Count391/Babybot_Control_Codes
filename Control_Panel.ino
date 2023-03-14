@@ -14,8 +14,8 @@ int speed3Pin = A2;
 int autoPin = A3;
 
 // Initializing variables
-int outputAngleValue = 0;
-int outputSpeedValue = 0;
+int outputAngleValue = 1;
+int outputSpeedValue = 1;
 int time = 0;
 
 // Setup function
@@ -73,16 +73,20 @@ void loop() {
       if (time > 0) {
         // Check if auto pin is 1
         if (digitalRead(autoPin) == 1) {
-          Serial.println("Output");
-          // Check if enable pin is 1
-          while (digitalRead(enablePin) == 1) {
-            // Wait for enable pin to become 0
+          previousTime = 1/1000 * millis();
+          while (digitalRead(enablePin) == 1 && start == 1 && time > 0){
+            Serial.println("Output");
+            currentTime = 1/1000 * millis();
+            time-- = currentTime - previousTime;
+            previousTime = currentTime;
           }
+          
         } else {
-          Serial.println("Gamebar");
-          // Check if enable pin is 1
-          while (digitalRead(enablePin) == 1) {
-            // Wait for enable pin to become 0
+          while (digitalRead(enablePin) == 1 && start == 1 && time > 0){
+            Serial.println("Gamebar");
+            currentTime = 1/1000 * millis();
+            time-- = currentTime - previousTime;
+            previousTime = currentTime;
           }
         }
       }
