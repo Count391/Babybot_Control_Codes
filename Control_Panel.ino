@@ -1,10 +1,11 @@
-// Assigning pins
+// Import necessary libraries for 7-segment display
 #include <Wire.h> 
 #include <Adafruit_GFX.h>
 #include "Adafruit_LEDBackpack.h"
 
 Adafruit_7segment matrix = Adafruit_7segment();
 
+//Assign pins
 int enablePin = 7;
 int startPin = 8;
 int timeUpPin = 9;
