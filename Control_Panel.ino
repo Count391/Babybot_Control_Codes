@@ -1,6 +1,10 @@
 // Assigning pins
-int outputAngle = 5;
-int outputSpeed = 6;
+#include <Wire.h> 
+#include <Adafruit_GFX.h>
+#include "Adafruit_LEDBackpack.h"
+
+Adafruit_7segment matrix = Adafruit_7segment();
+
 int enablePin = 7;
 int startPin = 8;
 int timeUpPin = 9;
@@ -16,12 +20,21 @@ int autoPin = A3;
 // Initializing variables
 int outputAngleValue = 1;
 int outputSpeedValue = 1;
-int time = 0;
+int duration = 0;
+
+boolean button(int pinNumber){
+  return digitalRead(pinNumber);
+}
+
+void ledDisplay(int ledOutput){
+  matrix.println(ledOutput, DEC);
+  matrix.writeDisplay();
+}
 
 // Setup function
 void setup() {
-  pinMode(outputAngle, OUTPUT);
-  pinMode(outputSpeed, OUTPUT);
+  Serial.begin(9600);
+  matrix.begin(0x70);
   pinMode(enablePin, INPUT_PULLUP);
   pinMode(startPin, INPUT_PULLUP);
   pinMode(timeUpPin, INPUT_PULLUP);
@@ -38,57 +51,65 @@ void setup() {
 // Loop function
 void loop() {
   // Check if enable pin is 1
-  if (digitalRead(enablePin) == 1) {
+  if (button(enablePin)) {
+    matrix.drawColon(true);
     // Check angle pins
-    if (digitalRead(angle1Pin) == 1) {
+    if (button(angle1Pin)) {
       outputAngleValue = 1;
-    } else if (digitalRead(angle2Pin) == 1) {
+    } else if (button(angle2Pin)) {
       outputAngleValue = 2;
-    } else if (digitalRead(angle3Pin) == 1) {
+    } else if (button(angle3Pin)) {
       outputAngleValue = 3;
     }
     // Check speed pins
-    if (digitalRead(speed1Pin) == 1) {
+    if (button(speed1Pin)) {
       outputSpeedValue = 1;
-    } else if (digitalRead(speed2Pin) == 1) {
+    } else if (button(speed2Pin)) {
       outputSpeedValue = 2;
-    } else if (digitalRead(speed3Pin) == 1) {
+    } else if (button(speed3Pin)) {
       outputSpeedValue = 3;
     }
     // Check timeUp pin
-    if (digitalRead(timeUpPin) == 1) {
-      if (time < 600) {
-        time += 1;
+    if (button(timeUpPin)) {
+      if (duration < 600) {
+        duration += 60;
+        delay(750);
       }
     }
     // Check timeDown pin
-    if (digitalRead(timeDownPin) == 1) {
-      if (time > 0) {
-        time -= 1;
+    if (button(timeDownPin)) {
+      if (duration > 0) {
+        duration -= 60;
+        delay(750);
       }
     }
+    int ledOutput = duration / 60 * 100 + duration % 60;
+    ledDisplay(ledOutput);
     // Check start pin
-    if (digitalRead(startPin) == 1) {
+    if (button(startPin)) {
       // Check if time is larger than 0
-      if (time > 0) {
+      if (duration > 0) {
         // Check if auto pin is 1
-        if (digitalRead(autoPin) == 1) {
-          previousTime = 1/1000 * millis();
-          while (digitalRead(enablePin) == 1 && start == 1 && time > 0){
+        if (button(autoPin)) {
+          int previousTime = 1/1000 * millis();
+          while (button(enablePin) && button(startPin) && duration > 0){
             Serial.println("Output");
-            currentTime = 1/1000 * millis();
-            time-- = currentTime - previousTime;
+            int currentTime = 1/1000 * millis();
+            duration -= currentTime - previousTime;
             previousTime = currentTime;
           }
           
         } else {
-          while (digitalRead(enablePin) == 1 && start == 1 && time > 0){
+          int previousTime = 1/1000 * millis();
+          while (button(enablePin) && button(startPin) && duration > 0){
             Serial.println("Gamebar");
-            currentTime = 1/1000 * millis();
-            time-- = currentTime - previousTime;
+            int currentTime = 1/1000 * millis();
+            duration -= currentTime - previousTime;
             previousTime = currentTime;
           }
         }
+        int ledOutput = duration / 60 * 100 + duration % 60;
+        ledDisplay(ledOutput);
       }
     }
   }
