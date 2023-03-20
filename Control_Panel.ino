@@ -24,7 +24,7 @@ int outputSpeedValue = 1;
 int duration = 0;
 
 boolean button(int pinNumber){
-  return digitalRead(pinNumber);
+  return !digitalRead(pinNumber);
 }
 
 void ledDisplay(int ledOutput){
