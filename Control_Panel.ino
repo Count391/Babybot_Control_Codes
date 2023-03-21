@@ -54,7 +54,23 @@ void loop() {
       matrix.drawColon(true);
       matrix.writeDisplay();
       // Check angle pins
-      if (!button(angle1Pin)) {
+      Serial.print("Angle:");
+      Serial.println(outputAngleValue);
+      Serial.print("Speed:");
+      Serial.println(outputSpeedValue);
+      delay(1000);
+      
+      if (!button(speed1Pin)) {
+        if (button(speed2Pin)){
+          outputSpeedValue = 1;
+        }else{
+          outputSpeedValue  = 2;
+        }
+      } else{
+        outputSpeedValue = 3;
+      }
+      // Check speed pins
+            if (!button(angle1Pin)) {
         if (button(angle2Pin)){
           outputAngleValue = 1;
         }else{
@@ -63,7 +79,6 @@ void loop() {
       } else{
         outputAngleValue = 3;
       }
-      // Check speed pins
       int durationMin = duration / 60000;
       int ledOutput = durationMin*100 + (duration / 1000) - durationMin * 60;
       ledDisplay(ledOutput);
