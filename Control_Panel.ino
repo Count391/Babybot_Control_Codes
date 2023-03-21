@@ -19,7 +19,7 @@ int autoPin = A3;
 // Initializing variables
 int outputAngleValue = 1;
 int outputSpeedValue = 1;
-int duration = 1000;
+long duration = 845000;
 
 boolean button(int pinNumber){
   return !digitalRead(pinNumber);
@@ -48,13 +48,14 @@ void setup() {
 // Loop function
 void loop() {
   // Check if enable pin is 1
+  
+
   if (button(enablePin)) {
-    delay(2000);
-    while (!button(enablePin){
       matrix.drawColon(true);
+      matrix.writeDisplay();
       // Check angle pins
-      if (button(!angle1Pin)) {
-        if (button(angle2Pin){
+      if (!button(angle1Pin)) {
+        if (button(angle2Pin)){
           outputAngleValue = 1;
         }else{
           outputAngleValue  = 2;
@@ -63,59 +64,43 @@ void loop() {
         outputAngleValue = 3;
       }
       // Check speed pins
-      if (button(!speed1Pin)) {
-        if (button(speed2Pin){
-          outputSpeedValue = 1;
-        }else{
-          outputSpeedValue  = 2;
-        }
-      } else{
-        outputSpeedValue = 3;
-      }
-      // Check timeUp pin
-      if (button(timeUpPin)) {
-        if (duration < 600) {
-          duration += 60;
-          delay(750);
-        }
-      }
-      // Check timeDown pin
-      if (button(timeDownPin)) {
-        if (duration > 0) {
-          duration -= 60;
-          delay(750);
-        }
-      }
-      int ledOutput = duration / 60 * 100 + duration % 60;
+      int durationMin = duration / 60000;
+      int ledOutput = durationMin*100 + (duration / 1000) - durationMin * 60;
       ledDisplay(ledOutput);
       // Check start pin
       if (button(startPin)) {
-        delay(2000);
-        while (!button(startPin){
+        delay(1000);
         // Check if time is larger than 0
         if (duration > 0) {
           // Check if auto pin is 1
-            int previousTime = 1/1000 * millis();
-            while (!button(enablePin) && button(startPin) && duration > 0){
-              Serial.println("Output");
-              int currentTime = 1/1000 * millis();
+            long previousTime = millis();
+            while (button(enablePin) && !button(startPin) && duration > 0){
+              matrix.drawColon(true);
+              matrix.writeDisplay();
+              long currentTime = millis();
+              Serial.println("on");
+              delay(1000);
               duration -= currentTime - previousTime;
               previousTime = currentTime;
+              int durationMin = duration / 60000;
+              int ledOutput = durationMin*100 + (duration / 1000) - durationMin * 60;
+              ledDisplay(ledOutput);
             }
             
           } else {
             int previousTime = 1/1000 * millis();
-            while (!button(enablePin) && button(startPin) && duration > 0){
+            while (button(enablePin) && !button(startPin) && duration > 0){
               Serial.println("Gamebar");
               int currentTime = 1/1000 * millis();
               duration -= currentTime - previousTime;
               previousTime = currentTime;
             }
           }
-          int ledOutput = duration / 60 * 100 + duration % 60;
-          ledDisplay(ledOutput);
+          delay(1250);               
         }
+
+      }else{
+        matrix.print("");
+        matrix.writeDisplay();
       }
-    }
   }
-}
