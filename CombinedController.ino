@@ -1,3 +1,10 @@
+// Import necessary libraries for 7-segment display
+#include <Wire.h> 
+#include <Adafruit_GFX.h>
+#include "Adafruit_LEDBackpack.h"
+
+Adafruit_7segment matrix = Adafruit_7segment();
+
 //Modbus Setup
 #include <SPI.h>
 #include <Ethernet.h>
@@ -15,45 +22,46 @@ ModbusTCPClient modbusTCPClient(ethClient);
 
 //Buttons setup
 int enablePin = 7;    //Power button
-int playpause = 2;     //play/pause button
-int timeUpPin = 9;    //increase time
+int startPin = 8;     //play/pause button
+//int timeUpPin = 9;    //increase time
 //int timeDownPin = 10; //decrease time
 int angle1Pin = 11;   //angle dial
 int angle2Pin = 12;
-int angle3Pin = 13;
 int speed1Pin = A0;   //speed dial
 int speed2Pin = A1;
-int speed3Pin = A2;
-int autoPin = A3;     //auto mode
+//int autoPin = A3;     //auto mode
 
 // Initializing variables
 int outputAngleValue = 1;
 int outputSpeedValue = 1;
-int time = 0;
+int previousAngleValue = 1;
+int previousSpeedValue = 1;
+long duration = 845000;
 byte lastButtonState = LOW;
-unsigned long debounceDuration = 50; // millis
-unsigned long lastTimeButtonStateChanged = 0;
-int count = 1;
 
 enum dir {
   pos,
   neg
 };
 
+enum parameter {
+  spd,
+  agl
+};
+
 void setup() {
   //Buttons setup
   pinMode(enablePin, INPUT_PULLUP);
-  pinMode(playpause, INPUT_PULLUP);
-  pinMode(timeUpPin, INPUT_PULLUP);
+  pinMode(startPin, INPUT_PULLUP);
+  //pinMode(timeUpPin, INPUT_PULLUP);
   //pinMode(timeDownPin, INPUT_PULLUP);
   pinMode(angle1Pin, INPUT_PULLUP);
   pinMode(angle2Pin, INPUT_PULLUP);
-  pinMode(angle3Pin, INPUT_PULLUP);
   pinMode(speed1Pin, INPUT_PULLUP);
   pinMode(speed2Pin, INPUT_PULLUP);
-  pinMode(speed3Pin, INPUT_PULLUP);
-  pinMode(autoPin, INPUT_PULLUP);
+  //pinMode(autoPin, INPUT_PULLUP);
   Serial.begin(9600);
+  matrix.begin(0x07);
 
   //Modbus Setup
   Ethernet.init(10);   // MKR ETH shield
@@ -78,31 +86,88 @@ void loop() {
       Serial.println("Modbus TCP Client failed to connect!");
     } else {
       Serial.println("Modbus TCP Client connected");
-      enableAxes();
-      setVelLvl(2);
-      setAngle(2);
+      
     }
   } else {
 
   }
-  if (millis() - lastTimeButtonStateChanged > debounceDuration) {
-      byte buttonState = digitalRead(playpause);
-      if (buttonState != lastButtonState) {
-        lastTimeButtonStateChanged = millis();
-        lastButtonState = buttonState;
-        if (buttonState == LOW) {          //button has been pressed
-          if(count == 1){
-            toggleMotion();
-            count = 2;
-          }
-          else{
-            disableAxes();
-            count = 1;
-          }
-          Serial.println("Button pressed");
-        }
+  //Serial.println("Entered the main loop!");
+
+    if (button(enablePin)) {
+      matrix.drawColon(true);
+      matrix.writeDisplay();
+      // Check if levels have changed
+      if(previousSpeedValue != outputSpeedValue){
+        Serial.print("Speed:");
+        Serial.println(outputSpeedValue);
+        previousSpeedValue = outputSpeedValue;
       }
-  }
+      if(previousAngleValue != outputAngleValue){
+        Serial.print("Angle:");
+        Serial.println(outputAngleValue);
+        previousAngleValue = outputAngleValue;
+      }
+      // Check speed and angle pins
+      levelCheck(spd);
+      levelCheck(agl);
+      delay(100);
+      
+      int durationMin = duration / 60000;
+      int ledOutput = durationMin*100 + (duration / 1000) - durationMin * 60;
+      ledDisplay(ledOutput);
+      
+      // Check play/pause button
+      if (button(startPin)) {
+        delay(1000);
+        // Check if time is larger than 0
+        if (duration > 0) {
+          // Check if auto pin is 1
+          Serial.println("BabyBot is enabled at:");
+          Serial.print("Speed: ");
+          Serial.println(outputSpeedValue);
+          Serial.print("Angle: ");
+          Serial.println(outputAngleValue);
+          setVelLvl(outputSpeedValue);
+          setAngle(outputAngleValue);
+          toggleMotion();
+            long previousTime = millis();
+            while (button(enablePin) && !button(startPin) && duration > 0){
+              matrix.drawColon(true);
+              matrix.writeDisplay();
+              long currentTime = millis();
+              Serial.println("on");
+              delay(500);
+              duration -= currentTime - previousTime;
+              previousTime = currentTime;
+              int durationMin = duration / 60000;
+              int ledOutput = durationMin*100 + (duration / 1000) - durationMin * 60;
+              ledDisplay(ledOutput);
+            }
+            //disableAxes();
+          } else {
+            int previousTime = 1/1000 * millis();
+            while (button(enablePin) && !button(startPin) && duration > 0){
+              Serial.println("Gamebar");
+              int currentTime = 1/1000 * millis();
+              duration -= currentTime - previousTime;
+              previousTime = currentTime;
+            }
+          }
+          delay(1250);
+                      
+        }
+        // End of play/pause button
+      }
+      // End of power button loop
+      //
+      //
+      //
+      else{
+        matrix.print("");
+        matrix.writeDisplay();
+      }
+
+  
 //  jog(1, neg);
 //  jog(2, neg);
 //  Serial.println("Velocity Level 1, Angle Level 1");
@@ -275,6 +340,47 @@ void enableActions() { //should only need to do this once at start
 void toggleMotion(){
   enableAxes();
   delay(50);
-  jog(1,pos);
-  jog(2,pos);
+  jog(1,neg);
+  jog(2,neg);
+}
+
+//Button Functions
+boolean button(int pinNumber){
+  return !digitalRead(pinNumber);
+}
+
+void ledDisplay(int ledOutput){
+  matrix.println(ledOutput, DEC);
+  matrix.writeDisplay();
+}
+
+void levelCheck(parameter p) {
+  int output;
+  int pin1, pin2;
+  //Check which pins to read
+  if (p == spd){
+      pin1 = speed1Pin;
+      pin2 = speed2Pin;
+    }
+    else if(p == agl){
+      pin1 = angle1Pin;
+      pin2 = angle2Pin;
+    }
+    //Read pins
+    if (!button(pin1)) {
+      if (button(pin2)){
+          output = 1;
+        }else{
+          output  = 2;
+        }
+      } else{
+        output = 3;
+      }
+    //Set output to SpeedValue or AngleValue
+    if (p == spd){
+      outputSpeedValue = output;
+    }
+    else if(p == agl){
+      outputAngleValue = output;
+    }
 }
