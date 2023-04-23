@@ -4,7 +4,7 @@ int nextLED = 0;                                //Variable for current LED displ
 void setup() {
   int pinNumber = 2;
   while(pinNumber <= 6){
-    pinMode(pinNumber, INPUT); 
+    pinMode(pinNumber, INPUT_PULLUP); 
     pinNumber++;
   }                                             //Set the input pins
   while(pinNumber <= 11){
@@ -41,16 +41,16 @@ void loop() {
     currentLED = nextLED;
     digitalWrite((currentLED), HIGH);
   }
-  
-  if(!digitalRead(2)&&currentLED == 1){        //Check input against target
+  Serial.println(currentLED);
+  if(!digitalRead(2) && currentLED == 7){        //Check input against target
     nextLED = random(7, 12);                     //Change pattern if input matches target
-  }else if(!digitalRead(3)&&currentLED == 2){
+  }else if(!digitalRead(3) && currentLED == 8){
     nextLED = random(7, 12);
-  }else if(!digitalRead(4)&&currentLED == 3){
+  }else if(!digitalRead(4) && currentLED == 9){
     nextLED = random(7, 12);
-  }else if(!digitalRead(5)&&currentLED == 4){
+  }else if(!digitalRead(5) && currentLED == 10){
     nextLED = random(7, 12);
-  }else if(!digitalRead(5)&&currentLED == 4){
+  }else if(!digitalRead(6) && currentLED == 11){
     nextLED = random(7, 12);
   }
 }
