@@ -86,25 +86,6 @@ void loop() {
       delay(10);  // we're done! do nothing...
     }
   }
-  if (Serial.available()) {
-    char c = Serial.read();
-    
-    // if we get an 's' on the serial console, stop!
-    if (c == 's') {
-      musicPlayer.stopPlaying();
-    }
-    
-    // if we get an 'p' on the serial console, pause/unpause!
-    if (c == 'p') {
-      if (! musicPlayer.paused()) {
-        Serial.println("Paused");
-        musicPlayer.pausePlaying(true);
-      } else { 
-        Serial.println("Resumed");
-        musicPlayer.pausePlaying(false);
-      }
-    }
-  }
 
   delay(100);
 }
