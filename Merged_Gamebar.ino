@@ -17,7 +17,7 @@ Adafruit_VS1053_FilePlayer musicPlayer =   Adafruit_VS1053_FilePlayer(BREAKOUT_R
 
 int currentLED = 0;                             //Variable for next LED display instruction
 int nextLED = 0;                                //Variable for current LED display instruction
-unsigned long testMillis;
+unsigned long previousMillis = 0;
 unsigned long currentMillis;
 
 void setup() {
@@ -33,13 +33,10 @@ void setup() {
   
   for(int i = 0; i <= 1; i++){                  //Turn on all lights for initial check
     for (pinNumber = 7; pinNumber <= 11; pinNumber++) {
-      testMillis = millis()
-      while (testMillis < 1000){
-        digitalWrite(pinNumber, HIGH);
-      }
-      while (testMillis <2000){
-        digitalWrite(pinNumber,LOW)       
-      }
+      digitalWrite(pinNumber, HIGH);
+      delay(1000);
+      digitalWrite(pinNumber,LOW);
+      delay(1000);
     }
   }
   randomSeed(analogRead(A0));                   //Generate random lighting pattern
@@ -80,15 +77,17 @@ void setup() {
 
 void loop() {
   // Blinking for the LED pattern change
+  currentMillis = millis();
   if (currentLED != nextLED){  
     // Toggling High/Low 5 times (1.25 seconds)
     for (int i = 0, i < 5, i++) {
-      currentMillis = millis();
-      while (currentMillis < 250){
+      while (previousMillis - currentMillis < 250){
         digitalWrite((currentLED), LOW);
+        previousMillis = currentMillis;
       }
-      while (currentMillis < 1250){
+      while (previousMillis - currentMillis < 250){
         digitalWrite((currentLED, HIGH);
+        previousMillis = currentMillis;
       }
     }
     digitalWrite((currentLED), LOW);
