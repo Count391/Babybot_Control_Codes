@@ -21,53 +21,43 @@ unsigned long previousMillis = 0;
 unsigned long currentMillis;
 
 void setup() {
-  int pinNumber = 2;
-  while(pinNumber <= 6){
-    pinMode(pinNumber, INPUT_PULLUP); 
-    pinNumber++;
-  }                                             //Set the input pins
-  while(pinNumber <= 11){
-    pinMode(pinNumber, OUTPUT);
-    pinNumber++;
-  }                                             //Set the output pins
+  // Setting up input and output pins
+  int pinNumberInput[] = {11, 12, 13, 2, 7};
+  static const uint8_t pinNumberOutput[] = {A1, A2, A3, A4, A5};
+  while ((int i = 0) < 5) {
+    pinMode(pinNumberInput[i], INPUT_PULLUP);
+    pinMode(pinNumberOutput[i], OUTPUT);
+    i++;
+  }
   
-  for(int i = 0; i <= 1; i++){                  //Turn on all lights for initial check
-    for (pinNumber = 7; pinNumber <= 11; pinNumber++) {
-      digitalWrite(pinNumber, HIGH);
+  // Turning on all lights for initial check
+  for(int i = 0; i <= 1; i++){
+    for (int j = 0; j < 5; j++) {
+      digitalWrite(pinNumberOutput[j], HIGH);
       delay(1000);
-      digitalWrite(pinNumber,LOW);
+      digitalWrite(pinNumberOutput[j],LOW);
       delay(1000);
     }
   }
-  randomSeed(analogRead(A0));                   //Generate random lighting pattern
-  nextLED = random(7, 12);                       //Initialize the LED pattern
-
   
-  Serial.begin(9600);
-  Serial.println("Adafruit VS1053 Simple Test");
-
+  // Generating random lighting pattern
+  randomSeed(analogRead(A0));
+  nextIndex = random(0,5);
+  nextLED = pinNumberOutput[nextIndex];
+  
+  // Adafruit VS1053 Simple Test 
   if (! musicPlayer.begin()) { // initialise the music player
      Serial.println(F("Couldn't find VS1053, do you have the right pins defined?"));
      while (1);
   }
-  Serial.println(F("VS1053 found"));
-  
    if (!SD.begin(CARDCS)) {
     Serial.println(F("SD failed, or not present"));
     while (1);  // don't do anything more
   }
 
-  // list files
+  // Setting up VS1053
   printDirectory(SD.open("/"), 0);
-  
-  // Set volume for left, right channels. lower numbers == louder volume!
   musicPlayer.setVolume(20,20);
-
-  // Timer interrupts are not suggested, better to use DREQ interrupt!
-  //musicPlayer.useInterrupt(VS1053_FILEPLAYER_TIMER0_INT); // timer int
-
-  // If DREQ is on an interrupt pin (on uno, #2 or #3) we can do background
-  // audio playing
   musicPlayer.useInterrupt(VS1053_FILEPLAYER_PIN_INT);  // DREQ int
   
   // Play one file, don't return until complete
@@ -76,39 +66,32 @@ void setup() {
 }
 
 void loop() {
-  // Blinking for the LED pattern change
+  // LED button pattern (blinking)
   currentMillis = millis();
-  if (currentLED != nextLED){  
-    // Toggling High/Low 5 times (1.25 seconds)
-    for (int i = 0, i < 5, i++) {
-      while (previousMillis - currentMillis < 250){
-        digitalWrite((currentLED), LOW);
-        previousMillis = currentMillis;
-      }
-      while (previousMillis - currentMillis < 250){
-        digitalWrite((currentLED, HIGH);
-        previousMillis = currentMillis;
-      }
+  if ((currentLED != nextLED) && ((previousMillis - currentMillis) > 500)){  
+    if ((digitalRead(currentLED) == 0){
+      digitalWrite((currentLED), HIGH);
     }
-    digitalWrite((currentLED), LOW);
-    currentLED = nextLED;
-    digitalWrite((currentLED), HIGH);
+    elseif ((digitalRead(currentLED) == 1){
+      digitalWrite((currentLED), LOW);
+    }
+    previousMillis = currentMillis;
   }
-  Serial.println(currentLED);
 
-  // Changing Pattern if Input Matches Target
-  int i = 2;
-  while (i < 7) {
-    if (!digitalRead(i) && currentLED == (i+5)){
+  // Button is correctly pressed
+  int i = 0;
+  while (i < 5) {
+    if (!digitalRead(pinNumberInput[i]) && currentLED == (pinNumberOutput[i])){
+      // Play successful music
       musicPlayer.stopPlaying();
-      musicPlayer.playFullFile("/track002.mp3"); // Successful Music
-      nextLED = random(7,12);
-      // Confirming nextLED is Different
+      musicPlayer.playFullFile("/track002.mp3");
+      // Determine next button
+      digitalWrite((currentLED), LOW);
       while (currentLED == nextLED) {
-        nextLED = random(7,12);
-      }
-      if (musicPlayer.stopped()){
-        musicPlayer.playFullFile("/track001.mp3"); // Background Music
+        nextIndex = random(0,5);
+        nextLED = pinOutput[nextIndex];
+      } // Resume background music
+      musicPlayer.playFullFile("/track001.mp3");
       }
     }
     i++;
