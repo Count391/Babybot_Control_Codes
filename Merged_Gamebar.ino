@@ -89,7 +89,7 @@ void loop() {
       digitalWrite((currentLED), LOW);
       while (currentLED == nextLED) {
         nextIndex = random(0,5);
-        nextLED = pinOutput[nextIndex];
+        nextLED = pinNumberOutput[nextIndex];
       } // Resume background music
       musicPlayer.playFullFile("/track001.mp3");
       }
