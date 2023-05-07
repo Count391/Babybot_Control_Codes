@@ -72,11 +72,6 @@ int rotary(int CLK, int DT, boolean lastStateCLK){
     }
 }
 
-void ledDisplay(int ledOutput){
-  matrix.println(ledOutput, DEC);
-  matrix.writeDisplay();
-}
-
 byte smallLed(int speedValue, int angleValue, int motion){
   int ledRegister = 0;
   if (speedValue > 1){
@@ -213,13 +208,13 @@ void loop() {
     message = 0;
     break;
     case 2:
-    message = 1 + outputSpeedValue * 10 + outputAngleValue * 10;
+    message = 1 + outputSpeedValue * 10 + outputAngleValue * 100;
     break;
     case 3:
-    message = 1 + outputSpeedValue * 10 + outputAngleValue * 10 + 1000;
+    message = 1 + outputSpeedValue * 10 + outputAngleValue * 100 + 1000;
     break;
     case 4:
-    message = 1 + outputSpeedValue * 10 + outputAngleValue * 10 + 2000;
+    message = 1 + outputSpeedValue * 10 + outputAngleValue * 100 + 2000;
     break;
     case 5:
     message = 1 + 10000;
