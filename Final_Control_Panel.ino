@@ -22,19 +22,22 @@ Adafruit_7segment matrix = Adafruit_7segment();
 #define register_SER 17 
 #define ledPin 13
 #define com 1
+#define latchPin 19
+#define clockPin 18
+#define dataPin 17
 
 // Initializing variables
-int outputAngleValue = 1;
-int outputSpeedValue = 1;
+int outputAngleValue = 0;
+int outputSpeedValue = 0;
 int state = 0;
 long message = 0;
 /*
  * message bit meaning from left to right:
  * 1. On/Off
- * 2. axis
- * 3. Motion type
- * 4. Speed
- * 5. Angle
+ * 2.Speed
+ * 3.Angle
+ * 4. axis
+ * 5. Motion type
  */
 boolean power = 0;
 boolean start = 0;
@@ -74,18 +77,35 @@ void ledDisplay(int ledOutput){
   matrix.writeDisplay();
 }
 
-void smallLed(int ledPattern){
-  digitalWrite(register_RCLK, LOW);
-  digitalWrite(register_SER, LOW);
-  digitalWrite(register_SRCLK, LOW);
-  digitalWrite(ledPin, LOW);  //Turn off all lights off first
-  
+byte smallLed(int speedValue, int angleValue, int motion){
+  int ledRegister = 0;
+  if (speedValue > 1){
+    bitSet(ledRegister, 2);
+  }else if (speedValue == 3){
+    bitSet(ledRegister, 3);
+  }
+  if (angleValue > 1){
+    bitSet(ledRegister, 4);
+  }else if (speedValue == 3){
+    bitSet(ledRegister, 5);
+  }
+  switch (motion){
+    case 1:
+    bitSet(ledRegister, 6);
+    break;
+    case 2:
+    bitSet(ledRegister, 7);
+    break;
+    default:
+    bitSet(ledRegister, 8);
+    break;
+  }
+  return ledRegister;
 }
 
 // Setup function
 void setup() {
   Serial.begin(9600);
-  matrix.begin(0x70);
   pinMode(powerPin, INPUT_PULLUP);
   pinMode(pausePin, INPUT_PULLUP);
   pinMode(bouncePin, INPUT_PULLUP);
@@ -101,6 +121,9 @@ void setup() {
   pinMode(register_SRCLK, OUTPUT);
   pinMode(register_SER, OUTPUT); 
   pinMode(ledPin, OUTPUT);
+  pinMode(latchPin, OUTPUT);
+  pinMode(dataPin, OUTPUT);
+  pinMode(clockPin, OUTPUT);
 }
 
 boolean lastStateAngleCLK = digitalRead(angle_CLK);
@@ -109,12 +132,15 @@ boolean lastStateTimeCLK = digitalRead(time_CLK);
 
 // Loop function
 void loop() {
-  // Check if enable pin is 0
+  byte ledRegister = 0;
+  
   if (button(powerPin)){
     power = !power;
   }
 
-  if (power == 1){
+  if (power){
+    ledRegister = smallLed(outputSpeedValue, outputAngleValue, motion);
+    bitSet(ledRegister, 1);
     if (button(pausePin)){
       start = !start;
     }
@@ -134,6 +160,10 @@ void loop() {
   
   if (power){
     state = 1;
+    digitalWrite(latchPin, LOW);
+    shiftOut(dataPin, clockPin, LSBFIRST, ledRegister);
+    digitalWrite(latchPin, HIGH);
+    digitalWrite(ledPin, HIGH);
     if (start){
       state = 2;
       if (axis == 1){
@@ -170,25 +200,29 @@ void loop() {
         }
       }
     }
+  }else{
+    outputSpeedValue = 1;
+    outputAngleValue = 1;
+    start = 0;
+    state = 1;
+    duration = 845000;
   }
-
-  
 
   switch (state){
     case 1:
     message = 0;
     break;
     case 2:
-    message = message + 1;
+    message = 1 + outputSpeedValue * 10 + outputAngleValue * 10;
     break;
     case 3:
-    message = message + 11;
+    message = 1 + outputSpeedValue * 10 + outputAngleValue * 10 + 1000;
     break;
     case 4:
-    message = message + 21;
+    message = 1 + outputSpeedValue * 10 + outputAngleValue * 10 + 2000;
     break;
     case 5:
-    message = message + 101;
+    message = 1 + 10000;
     break;
   }
   Serial.println(message);
