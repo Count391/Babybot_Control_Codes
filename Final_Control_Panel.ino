@@ -129,9 +129,7 @@ boolean lastStateTimeCLK = digitalRead(time_CLK);
 void loop() {
   byte ledRegister = 0;
   
-  if (button(powerPin)){
-    power = !power;
-  }
+  power = digitalRead(powerPin);
 
   if (power){
     ledRegister = smallLed(outputSpeedValue, outputAngleValue, motion);
