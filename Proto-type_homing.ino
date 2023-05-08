@@ -1,22 +1,15 @@
+
+
 /* Read Tilt angles from Murata SCL3300 Inclinometer
  * Version 3.2.0 - September 3, 2021
  * Example2_BasicTiltReading
 */
-#include <Servo.h>
 #include <Wire.h>
 #include <SPI.h>
 #include <SCL3300.h>
 
-Servo s1;
-Servo s2;
-Servo s3;
-Servo s4;
-int v1=0;
-int v2=0;
-int M1=180;
-int M2=0;
-int M3 =180;
-int M4 =0;
+double roll = 0;
+double pitch =0;
 int x1 =0;
 int home =0;
 
@@ -26,43 +19,96 @@ SCL3300 inclinometer;
 // Need the following define for SAMD processors
 #if defined(ARDUINO_SAMD_ZERO) && defined(SERIAL_PORT_USBVIRTUAL)
   #define Serial SERIAL_PORT_USBVIRTUAL
-#endif
+  #endif
+
+  void homingSystem (){
+  int homingStatus = 0;  
+  if(inclinometer.available()) { //Get next block of data from sensor
+    Serial.println();
+    Serial.print("Roll Tilt: ");
+    pitch = inclinometer.getTiltLevelOffsetAngleX();  // pitch value is saved
+    Serial.print(roll);
+    Serial.print("\t");
+    Serial.print("Pitch Tilt is : ");   
+    roll = inclinometer.getTiltLevelOffsetAngleY();   // roll value is saved
+    Serial.print(pitch);
+    Serial.print("\t"); 
+    Serial.println(); 
+    delay(400); //Allow a little time to see the output
+      // Got all the ROll and Pitch values 
+     // Now we starts Homing logic based on those values
+    while(homingStatus != 1){
+      while (roll < 0){             // this means Axis 1 is higher and I set 0.1 for okay error  
+          
+        if(inclinometer.available()) { //Get next block of data from sensor
+          Serial.println();
+          Serial.print("Roll Tilt: ");
+          roll = inclinometer.getTiltLevelOffsetAngleY();  // pitch value is saved
+        } 
+        else {
+          inclinometer.reset();
+        } 
+              
+        Serial.println("roll <0 ");
+        Serial.println(roll);        
+        delay(800);      }
+        
+      while (roll > 0){             
+        roll = inclinometer.getTiltLevelOffsetAngleY();
+        Serial.println("roll >0 "); 
+        Serial.println(roll); 
+        delay(800);
+      // move the Axis 1 to go up some amount
+      } // at this point the roll is about 0(axis 1 and 2 have same height) so and we only need to adjust same
+      //amount of pitch for both axes(height to be 0 = plat)
+      while (pitch > 0) {
+        pitch = inclinometer.getTiltLevelOffsetAngleX();
+        Serial.println("pitch >0 ");
+        Serial.println(pitch);
+        delay(800);
+      // move Axis 1 & 2 to go down some amount
+      }
+      while (pitch < 0) {
+      // move Axis 1 & 2 to go up some amount
+      pitch = inclinometer.getTiltLevelOffsetAngleX();
+      Serial.println("pitch <0 ");
+      Serial.println(pitch);
+      delay(800);
+      }
+      if (abs(roll) <0.5 && abs(pitch) <0.5){   // after finishing adjustment, check if the platform is at home 0.5 = acceptable error range
+        homingStatus = 1;
+      }
+    }
+  }
+  else {
+    inclinometer.reset();
+  }
+  }
+
+
+  
 
 void setup() {
-  s1.attach(4);
-  s2.attach(6);
-  s3.attach(7);
-  s4.attach(8);
-  s1.write(180);
-  s2.write(0);  
-  s3.write(180);
-  s4.write(0);
-
-
-  Serial.begin(115200);
+  
+  Serial.begin(9600);
   delay(2000); //SAMD boards may need a long time to init SerialUSB
   Serial.println("Reading basic Tilt values from SCL3300 Inclinometer");
 
   if (inclinometer.begin() == false) {
     Serial.println("Murata SCL3300 inclinometer not connected.");
     while(1); //Freeze
+    homingSystem();
   }
+  
+
 }
 
 void loop() {
+homingSystem();
+delay(1000);
+}
   
-  if (inclinometer.available()) { //Get next block of data from sensor
-    Serial.println();
-    Serial.print("X Tilt: ");
-    v1 = inclinometer.getTiltLevelOffsetAngleX();
-    v2 = inclinometer.getTiltLevelOffsetAngleY();   
-    Serial.print(v1);
-    Serial.print("\t");
-    Serial.print("Y Tilt: ");
-    Serial.print(v2);
-    Serial.println(); 
-    delay(100); //Allow a little time to see the output
-
+/*
     if ((v2 > 0) && (x1 == 0) && (home==0)){
       Serial.print("Y-axis zeroing by moving negative direction");
       Serial.println();
@@ -75,7 +121,7 @@ void loop() {
       M1 = M1 - 1;
       s1.write(M1);
       }
-    
+/*    
     else if ((-1 <= v2 <= 1) && (x1 ==0) &&(home==0)) {
       Serial.print("Y-axis zeroed, starting X-axis zeroing");
       Serial.println();
@@ -116,7 +162,4 @@ void loop() {
     home =1;
     }  
     
-
-  else inclinometer.reset();
-  }
-}
+*/
