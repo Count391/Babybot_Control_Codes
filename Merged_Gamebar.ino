@@ -17,14 +17,15 @@ Adafruit_VS1053_FilePlayer musicPlayer =   Adafruit_VS1053_FilePlayer(BREAKOUT_R
 
 int currentLED = 0;                             //Variable for next LED display instruction
 int nextLED = 0;                                //Variable for current LED display instruction
+int nextIndex = 0;
+int pinNumberInput[] = {11, 12, 13, 2, 7};
+static const uint8_t pinNumberOutput[] = {A1, A2, A3, A4, A5};
 unsigned long previousMillis = 0;
 unsigned long currentMillis;
 
 void setup() {
   // Setting up input and output pins
-  int pinNumberInput[] = {11, 12, 13, 2, 7};
-  static const uint8_t pinNumberOutput[] = {A1, A2, A3, A4, A5};
-  while ((int i = 0) < 5) {
+  while (int i = 0 < 5) {
     pinMode(pinNumberInput[i], INPUT_PULLUP);
     pinMode(pinNumberOutput[i], OUTPUT);
     i++;
@@ -56,7 +57,6 @@ void setup() {
   }
 
   // Setting up VS1053
-  printDirectory(SD.open("/"), 0);
   musicPlayer.setVolume(20,20);
   musicPlayer.useInterrupt(VS1053_FILEPLAYER_PIN_INT);  // DREQ int
   
@@ -69,15 +69,16 @@ void loop() {
   // LED button pattern (blinking)
   currentMillis = millis();
   if ((currentLED != nextLED) && ((previousMillis - currentMillis) > 500)){  
-    if ((digitalRead(currentLED) == 0){
+    if (digitalRead(currentLED) == 0){
       digitalWrite((currentLED), HIGH);
     }
-    elseif ((digitalRead(currentLED) == 1){
+    else{ 
       digitalWrite((currentLED), LOW);
     }
     previousMillis = currentMillis;
   }
 
+            
   // Button is correctly pressed
   int i = 0;
   while (i < 5) {
