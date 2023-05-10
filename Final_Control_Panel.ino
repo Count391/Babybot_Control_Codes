@@ -261,6 +261,12 @@ void loop() {
     shiftOut(dataPin, clockPin, LSBFIRST, ledRegister);
     digitalWrite(latchPin, HIGH);
   }
+  if (!timerDir && duration <= 1){
+    startState = 0;
+    duration = 845;
+  }else if (timerDir && duration >= 5998){
+    startState = 0;
+  }
 
   switch (state){
     case 1:
