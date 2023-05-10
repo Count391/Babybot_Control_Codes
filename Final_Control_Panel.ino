@@ -51,8 +51,6 @@ boolean angleRotaryState = 0;
 boolean timeRotaryState = 0;
 int bounceState = 0; //0 for off, 1 for on
 boolean timerDir = 0; //0 for count down, 1 for count up
-int durationMin = 0;
-int durationSec = 0;
 int timerReset = 0;
 int targetTime = 0;
 
