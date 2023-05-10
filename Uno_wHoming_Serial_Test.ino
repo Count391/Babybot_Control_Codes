@@ -9,6 +9,8 @@ SoftwareSerial mySerial = SoftwareSerial(rxPin, txPin);
 
 int axis1_down = 7;
 int axis1_up = 6;
+int axis2_down = 8;
+int axis2_up = 9;
 int both_down = 5;
 int both_up = 4;
 int both_stop = 3;
@@ -36,15 +38,16 @@ void getAngles(){
 
 void rollHoming(){
   getAngles();
+  mySerial.write(both_stop);
   mySerial.write(axis1_down);
-  while(roll < 0){
+  while(roll < 0.5){
     // move axis 1 down
     Serial.println(roll);
     getAngles();
   }
   mySerial.write(both_stop); // Stop motor
   mySerial.write(axis1_up);
-  while(roll > 0){
+  while(roll > -0.2){
     // move axis 1 up
     Serial.println(roll);
     getAngles();
@@ -54,6 +57,7 @@ void rollHoming(){
 
 void pitchHoming(){
   getAngles();
+  mySerial.write(both_stop);
   mySerial.write(both_up);
   while(pitch < 0){
     // move both axes up
@@ -88,15 +92,54 @@ void setup() {
 
 void loop() {
   getAngles();
-  while(abs(roll) > 0.5){
-    rollHoming();
+  if(roll > 15){
+    mySerial.write(axis2_down);
+    while(roll > 10){
+      getAngles();
+    }
+    mySerial.write(both_stop);
   }
-  while(abs(pitch) > 0.5){
-    pitchHoming();
+  Serial.println("First extreme checked");
+  if(roll < -15){
+    mySerial.write(axis2_up);
+    while(roll < -10){
+      getAngles();
+    }
+    mySerial.write(both_stop);
   }
+  Serial.println("Second extreme checked");
+  if(pitch > 20){
+    mySerial.write(both_down);
+    while(pitch > 5){
+      getAngles();
+    }
+    mySerial.write(both_stop);
+  }
+  Serial.println("Third extreme checked");
+  if(pitch < -10){
+    mySerial.write(both_up);
+    while(pitch < -5){
+      getAngles();
+    }
+    mySerial.write(both_stop);
+  }
+  Serial.println("Four extreme checked");
+  while(home_status == 0){
+    getAngles();
+    while(abs(roll) > 0.5){
+      rollHoming();
+    }
+    Serial.println("Roll checked");
+    while(abs(pitch) > 1){
+      pitchHoming();
+    }
+    Serial.println("Pitch checked");
 
     if(abs(roll) < 0.5 && abs(pitch) < 0.5){
-    Serial.println("Finished Roll"); // set the current position values to 0 degrees
-    mySerial.write(both_stop);
-    }
+      Serial.println("Finished Roll"); // set the current position values to 0 degrees
+      mySerial.write(both_stop);
+      home_status = 1;
+      }
+  }
+  Serial.println("Homing checked");
 }

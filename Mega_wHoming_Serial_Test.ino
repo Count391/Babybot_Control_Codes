@@ -22,6 +22,8 @@ enum dir {
 int incoming_data;
 int axis1_down = 7;
 int axis1_up = 6;
+int axis2_down = 8;
+int axis2_up = 9;
 int both_down = 5;
 int both_up = 4;
 int both_stop = 3;
@@ -72,7 +74,7 @@ while(!Serial2.available()){
     
   }
   incoming_data = Serial2.read();
-  setVelocity(100);
+  setVelocity(650);
   if(incoming_data == axis1_down){
     Serial.println("Axis 1 Down");
     enableAxes();
@@ -84,6 +86,18 @@ while(!Serial2.available()){
     enableAxes();
     delay(50);
     jog(1,pos);
+  }
+  else if(incoming_data == axis2_down){
+    Serial.println("Axis 2 Down");
+    enableAxes();
+    delay(50);
+    jog(2,neg);
+  }
+  else if(incoming_data == axis2_up){
+    Serial.println("Axis 2 Up");
+    enableAxes();
+    delay(50);
+    jog(2,pos);
   }
   else if(incoming_data == both_up){
     Serial.println("Both Up");
@@ -120,7 +134,7 @@ void setAngle(int lvl) {
     setLimits(1500, 2000);
   }
   else if (lvl == 2) {
-    setLimits(750, 2000);
+    setLimits(-5000, 5000);
   }
   else if (lvl == 3) {
     setLimits(100, 2000);
