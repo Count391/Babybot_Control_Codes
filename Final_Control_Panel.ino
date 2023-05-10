@@ -51,8 +51,8 @@ boolean angleRotaryState = 0;
 boolean timeRotaryState = 0;
 int bounceState = 0; //0 for off, 1 for on
 boolean timerDir = 0; //0 for count down, 1 for count up
-int timerReset = 0;
-int targetTime = 0;
+long timerReset = 0;
+long targetTime = 0;
 
 uint16_t number[] = {0x0C3F,0x0406,0x00DB,0x008F,0x00E6,
                    /* 0      1      2       3       4*/
@@ -172,7 +172,7 @@ void loop() {
         timerReset = 0;
       }
       if (timer.isPressed() && timerReset == 0){
-        timerReset = millis() + 3000;
+        timerReset = millis() + 3000000;
       }else if (timer.isPressed() && timerReset < millis()){
         duration = 0;
       }
@@ -198,17 +198,17 @@ void loop() {
     if (startState){
       if (timerDir){
         if (targetTime == 0){
-          targetTime = millis() + 1000;
+          targetTime = millis() + 1000000;
         }else if (targetTime < millis()){
           duration++;
-          targetTime = targetTime + 1000;
+          targetTime = targetTime + 1000000;
         }
       }else{
         if (targetTime = 0){
-          targetTime = millis() + 1000;
+          targetTime = millis() + 1000000;
         }else if (targetTime < millis()){
           duration--;
-          targetTime = targetTime + 1000;
+          targetTime = targetTime + 1000000;
         }
       }
       state = 2;
@@ -285,5 +285,5 @@ void loop() {
     message = 10000;
     break;
   }
-  Serial.println(message);
+  Serial.println(duration);
   }
