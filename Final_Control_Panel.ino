@@ -53,6 +53,8 @@ int bounceState = 0; //0 for off, 1 for on
 boolean timerDir = 0; //0 for count down, 1 for count up
 int durationMin = 0;
 int durationSec = 0;
+int timerReset = 0;
+int targetTime = 0;
 
 uint16_t number[] = {0x0C3F,0x0406,0x00DB,0x008F,0x00E6,
                    /* 0      1      2       3       4*/
@@ -167,6 +169,15 @@ void loop() {
       startState = !startState;
     }
     if (!startState){
+      if (timer.isReleased()){
+        timerDir = !timerDir;
+        timerReset = 0;
+      }
+      if (timer.isPressed() && timerReset == 0){
+        timerReset = millis() + 3000;
+      }else if (timer.isPressed() && timerReset < millis()){
+        duration = 0;
+      }
       motionState = motion.getState();
       if (axis.isReleased()){
         if (axisState < 2){
@@ -180,12 +191,28 @@ void loop() {
   }
   
   if (powerState){
+    ledDisplay(duration);
     state = 1;
     digitalWrite(latchPin, LOW);
     shiftOut(dataPin, clockPin, LSBFIRST, ledRegister);
     digitalWrite(latchPin, HIGH);
     digitalWrite(ledPin, HIGH);
     if (startState){
+      if (timerDir){
+        if (targetTime == 0){
+          targetTime = millis() + 1000;
+        }else if (targetTime < millis()){
+          duration++;
+          targetTime = targetTime + 1000;
+        }
+      }else{
+        if (targetTime = 0){
+          targetTime = millis() + 1000;
+        }else if (targetTime < millis()){
+          duration--;
+          targetTime = targetTime + 1000;
+        }
+      }
       state = 2;
       if (axisState == 1){
         state = 3;
@@ -196,24 +223,35 @@ void loop() {
         state = 5;
       }
     }else{
-      int angle_direction = rotary(angle_CLK, angle_DT, lastStateAngleCLK);
-      int speed_direction = rotary(speed_CLK, speed_DT, lastStateSpeedCLK);
+      targetTime = 0;
+      int angleDir = rotary(angle_CLK, angle_DT, lastStateAngleCLK);
+      int speedDir = rotary(speed_CLK, speed_DT, lastStateSpeedCLK);
+      int timeDir = rotary(time_CLK, time_DT, lastStateTimeCLK);
       lastStateAngleCLK = digitalRead(angle_CLK);
       lastStateSpeedCLK = digitalRead(speed_CLK);
-      if (angle_direction == 1 && outputAngleValue < 3){
+      if (angleDir == 1 && outputAngleValue < 3){
         outputAngleValue++;
       }
-      if (angle_direction == -1 && outputAngleValue >1){
+      if (angleDir == -1 && outputAngleValue > 1){
         outputAngleValue--;
       }
-      if (speed_direction == 1 && outputSpeedValue < 3){
+      if (speedDir == 1 && outputSpeedValue < 3){
         outputSpeedValue++;
       }
-      if (speed_direction == -1 && outputSpeedValue >1){
+      if (speedDir == -1 && outputSpeedValue > 1){
         outputSpeedValue--;
+      }
+      if (timeDir == 1 && duration < 5999){
+        duration += 60;
+      }
+      if (timeDir == -1 && duration > 0){
+        duration -= 30;
       }
     }
   }else{
+    alpha4.clear();
+    alpha4.writeDisplay();
+    targetTime = 0;
     outputSpeedValue = 1;
     outputAngleValue = 1;
     startState = 0;
