@@ -45,7 +45,7 @@ boolean powerState = 0;
 boolean startState = 0;
 int axisState = 0; //0 for pitch, 1 for roll, 2 for combine
 boolean motionState = 0; //0 for auto mode, 1 for baby mode
-long duration = 845000;
+int duration = 845;
 boolean speedRotaryState = 0;
 boolean angleRotaryState = 0;
 boolean timeRotaryState = 0;
@@ -254,7 +254,7 @@ void loop() {
     outputAngleValue = 1;
     startState = 0;
     state = 1;
-    duration = 845000;
+    duration = 845;
     digitalWrite(ledPin, LOW);
     ledRegister = 0;
     digitalWrite(latchPin, LOW);
