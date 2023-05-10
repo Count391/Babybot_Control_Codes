@@ -4,7 +4,7 @@
 #include <ezButton.h>
 #include "Adafruit_LEDBackpack.h"
 
-Adafruit_7segment matrix = Adafruit_7segment();
+Adafruit_AlphaNum4 alpha4 = Adafruit_AlphaNum4();
 
 //Assign pins
 ezButton power(7);  // Power
@@ -23,7 +23,6 @@ ezButton timer(12); // Timer press in
 #define register_SRCLK 6
 #define register_SER 17 
 #define ledPin 13
-#define com 1
 #define latchPin 4
 #define clockPin 6
 #define dataPin 8
@@ -51,6 +50,14 @@ boolean speedRotaryState = 0;
 boolean angleRotaryState = 0;
 boolean timeRotaryState = 0;
 int bounceState = 0; //0 for off, 1 for on
+boolean timerDir = 0; //0 for count down, 1 for count up
+int durationMin = 0;
+int durationSec = 0;
+
+uint16_t number[] = {0x0C3F,0x0406,0x00DB,0x008F,0x00E6,
+                   /* 0      1      2       3       4*/
+                     0x00ED,0x00FD,0x01401,0x00FF,0x00EF};
+                   /* 5      6      7      8         9 */
 
 int rotary(int CLK, int DT, boolean lastStateCLK){
   boolean currentStateCLK = digitalRead(CLK);
@@ -70,16 +77,16 @@ int rotary(int CLK, int DT, boolean lastStateCLK){
 byte smallLed(int speedValue, int angleValue, int axis){
   int ledRegister = 0;
   if (speedValue > 1){
-    bitSet(ledRegister, 1);
+    bitSet(ledRegister, 4);
   }
   if (speedValue == 3){
-    bitSet(ledRegister, 2);
-  }
-  if (angleValue > 1){
     bitSet(ledRegister, 3);
   }
+  if (angleValue > 1){
+    bitSet(ledRegister, 2);
+  }
   if (angleValue == 3){
-    bitSet(ledRegister, 4);
+    bitSet(ledRegister, 1);
   }
   switch (axis){
     case 1:
@@ -95,9 +102,27 @@ byte smallLed(int speedValue, int angleValue, int axis){
   return ledRegister;
 }
 
+void ledDisplay(int duration){
+  if (duration > 5999){
+    return;
+  }
+  int durationMin = duration / 60;
+  int durationSec = duration - 60 * durationMin;
+  int durationMin1 = durationMin / 10;
+  durationMin = durationMin - durationMin1 * 10;
+  int durationSec1 = durationSec /10;
+  durationSec = durationSec - durationSec1 * 10;
+  alpha4.writeDigitRaw(0, number[durationMin1]);
+  alpha4.writeDigitRaw(1, number[durationMin]);
+  alpha4.writeDigitRaw(2, number[durationSec1]);
+  alpha4.writeDigitRaw(3, number[durationSec]);
+  alpha4.writeDisplay();
+}
+
 // Setup function
 void setup() {
   Serial.begin(9600);
+  alpha4.begin(0x70);
   power.setDebounceTime(50); // set debounce time to 50 milliseconds
   play.setDebounceTime(50);
   bounce.setDebounceTime(50);
