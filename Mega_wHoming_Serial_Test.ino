@@ -1,6 +1,7 @@
 //Modbus Setup
 #include <SPI.h>
 #include <Ethernet.h>
+#include <ezButton.h>             // EZ BUTTON
 
 #include <ArduinoRS485.h> // ArduinoModbus depends on the ArduinoRS485 library
 #include <ArduinoModbus.h>
@@ -17,6 +18,13 @@ enum dir {
   pos,
   neg
 };
+
+ezButton plyps(9);  // button
+ezButton speedToggle(10);  // button
+ezButton angleToggle(11);  // button
+ezButton homebutton(12);  // button
+ezButton setZerobutton(13);  // button
+int playstate = 1;
 
 // Initialize variables for incoming data
 int incoming_data;
@@ -45,6 +53,8 @@ void setup() {
   if (Ethernet.linkStatus() == LinkOFF) {
     Serial.println("Ethernet cable is not connected.");
   }
+  plyps.setDebounceTime(50);
+  homebutton.setDebounceTime(50);
 }
 
 void loop() {
@@ -57,8 +67,8 @@ void loop() {
     } else {
       Serial.println("Modbus TCP Client connected");
       enableAxes();
-      setVelLvl(2);
-      setAngle(2);
+      setVelLvl(3);
+      setAngle(3);
     }
   } else {
     
@@ -70,57 +80,112 @@ void loop() {
 //
 //
 //
-while(!Serial2.available()){
-    
-  }
-  incoming_data = Serial2.read();
-  setVelocity(650);
-  if(incoming_data == axis1_down){
-    Serial.println("Axis 1 Down");
-    enableAxes();
-    delay(50);
-    jog(1,neg);
-  }
-  else if(incoming_data == axis1_up){
-    Serial.println("Axis 1 Up");
-    enableAxes();
-    delay(50);
-    jog(1,pos);
-  }
-  else if(incoming_data == axis2_down){
-    Serial.println("Axis 2 Down");
-    enableAxes();
-    delay(50);
-    jog(2,neg);
-  }
-  else if(incoming_data == axis2_up){
-    Serial.println("Axis 2 Up");
-    enableAxes();
-    delay(50);
-    jog(2,pos);
-  }
-  else if(incoming_data == both_up){
-    Serial.println("Both Up");
-    enableAxes();
-    delay(50);
-    jog(1,pos);
-    delay(50);
-    jog(2,pos);
-    Serial.println(incoming_data);
-  }
-  else if(incoming_data == both_down){
-    Serial.println("Both Down");
-    enableAxes();
-    delay(50);
-    jog(1,neg);
-    delay(50);
-    jog(2,neg);
-  }
-  else if(incoming_data == both_stop){
-    Serial.println("Both Stop");
-    disableAxes();
-  }
+//while(!Serial2.available()){
+//    
+//  }
+//  incoming_data = Serial2.read();
+//  setVelocity(650);
+//  switch (incoming_data) {
+//    case axis1_down:
+//    jog(1,neg);
+//    break;
+//    case axis1_up:
+//    jog(1,pos);
+//    break;
+//    case axis2_down:
+//    jog(2,neg);
+//    break;
+//    case axis2_up:
+//    jog(2,pos);
+//    break;
+//    case both_up:
+//    jog(1,pos);
+//    delay(50);
+//    jog(2,pos);
+//    break;
+//    case both_down:
+//    jog(1,neg);
+//    delay(50);
+//    jog(2,neg);
+//    break;
+//    case both_stop:
+//    stopJog();
+//    break;
+//  }
 
+
+
+
+
+
+
+//  if(incoming_data == axis1_down){
+//    Serial.println("Axis 1 Down");
+//    //enableAxes(); 
+//    //delay(50);
+//    jog(1,neg);
+//  }
+//  else if(incoming_data == axis1_up){
+//    Serial.println("Axis 1 Up");
+//    //enableAxes();
+//    //delay(50);
+//    jog(1,pos);
+//  }
+//  else if(incoming_data == axis2_down){
+//    Serial.println("Axis 2 Down");
+//    //enableAxes();
+//    //delay(50);
+//    jog(2,neg);
+//  }
+//  else if(incoming_data == axis2_up){
+//    Serial.println("Axis 2 Up");
+//    //enableAxes();
+//    //delay(50);
+//    jog(2,pos);
+//  }
+//  else if(incoming_data == both_up){
+//    Serial.println("Both Up");
+//    //enableAxes();
+//    //delay(50);
+//    jog(1,pos);
+//    delay(50);
+//    jog(2,pos);
+//    Serial.println(incoming_data);
+//  }
+//  else if(incoming_data == both_down){
+//    Serial.println("Both Down");
+//    //enableAxes();
+//    //delay(50);
+//    jog(1,neg);
+//    delay(50);
+//    jog(2,neg);
+//  }
+//  else if(incoming_data == both_stop){
+//    Serial.println("Both Stop");
+//    stopJog();
+//  }
+
+  plyps.loop();
+  homebutton.loop();
+  if(plyps.isReleased()){
+    if(playstate == 1){
+     //stop motion
+    stopJog();
+    Serial.println("stopping motion");
+    playstate = 0; 
+    }
+    else {
+      //start motion
+    toggleMotion();
+    Serial.println("starting motion");
+    playstate = 1;
+    }
+  }
+  if(homebutton.isReleased()){
+    //go to zero
+    go2zeroDegrees();
+    Serial.println("going to 0");
+  }
 }
 
 
@@ -131,13 +196,13 @@ void setAngle(int lvl) {
   // if level 2 ...
   // if level 3 ...
   if (lvl == 1) {
-    setLimits(1500, 2000);
+    setLimits(-50, 50);
   }
   else if (lvl == 2) {
-    setLimits(-5000, 5000);
+    setLimits(-1000, 1000);
   }
   else if (lvl == 3) {
-    setLimits(100, 2000);
+    setLimits(-3000, 3000);
   }
 }
 
@@ -165,13 +230,13 @@ void setVelLvl(int lvl) {
   // if level 2 ...
   // if level 3 ...
   if (lvl == 1) {
-    setVelocity(300);
+    setVelocity(500);
   }
   else if (lvl == 2) {
-    setVelocity(800);
+    setVelocity(1200);
   }
   else if (lvl == 3) {
-    setVelocity(1200);
+    setVelocity(3000);
   }
 }
 
@@ -265,5 +330,29 @@ void toggleMotion(){
   enableAxes();
   delay(50);
   jog(1,pos);
-  jog(2,pos);
+  jog(2,neg);
+}
+
+void go2zeroDegrees() {
+  int address = 137;      // for ACTION 23 & 24
+  modbusTCPClient.holdingRegisterWrite(address - 1, 1);
+  modbusTCPClient.holdingRegisterWrite(address, 1);
+  modbusTCPClient.holdingRegisterWrite(address - 1, 0);
+  modbusTCPClient.holdingRegisterWrite(address, 0);
+}
+
+void setCurrentPosZeroAngle() {
+  int address = 135;      // for ACTION 20 & 21
+  modbusTCPClient.holdingRegisterWrite(address - 1, 1);
+  modbusTCPClient.holdingRegisterWrite(address, 1);
+  modbusTCPClient.holdingRegisterWrite(address - 1, 0);
+  modbusTCPClient.holdingRegisterWrite(address, 0);
+}
+
+void stopJog() {
+  int address = 133;
+  modbusTCPClient.holdingRegisterWrite(address - 1, 1);
+  modbusTCPClient.holdingRegisterWrite(address, 1);
+  modbusTCPClient.holdingRegisterWrite(address - 1, 0);
+  modbusTCPClient.holdingRegisterWrite(address, 0);
 }
