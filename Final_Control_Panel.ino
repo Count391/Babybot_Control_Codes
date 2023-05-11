@@ -171,9 +171,9 @@ void loop() {
         timerDir = !timerDir;
         timerReset = 0;
       }
-      if (timer.isPressed() && timerReset == 0){
-        timerReset = millis() + 3000000;
-      }else if (timer.isPressed() && timerReset < millis()){
+      if (!(timer.getState()) && timerReset == 0){
+        timerReset = millis() + 3000;
+      }else if (!(timer.getState()) && timerReset < millis()){
         duration = 0;
       }
       motionState = motion.getState();
@@ -227,6 +227,7 @@ void loop() {
       int timeDir = rotary(time_CLK, time_DT, lastStateTimeCLK);
       lastStateAngleCLK = digitalRead(angle_CLK);
       lastStateSpeedCLK = digitalRead(speed_CLK);
+      lastStateTimeCLK = digitalRead(time_CLK);
       if (angleDir == 1 && outputAngleValue < 3){
         outputAngleValue++;
       }
@@ -261,7 +262,7 @@ void loop() {
     shiftOut(dataPin, clockPin, LSBFIRST, ledRegister);
     digitalWrite(latchPin, HIGH);
   }
-  if (!timerDir && duration <= 1){
+  if (!timerDir && duration < 0){
     startState = 0;
     duration = 845;
   }else if (timerDir && duration >= 5998){
@@ -285,6 +286,5 @@ void loop() {
     message = 10000;
     break;
   }
-  long a = 1000+millis();
-  Serial.println(duration);
+  Serial.println(message);
   }
