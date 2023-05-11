@@ -198,17 +198,17 @@ void loop() {
     if (startState){
       if (timerDir){
         if (targetTime == 0){
-          targetTime = millis() + 1000000;
-        }else if (targetTime < millis()){
+          targetTime = millis() + 1000;
+        }if (targetTime < millis()){
           duration++;
-          targetTime = targetTime + 1000000;
+          targetTime = targetTime + 1000;
         }
       }else{
-        if (targetTime = 0){
-          targetTime = millis() + 1000000;
+        if (targetTime == 0){
+          targetTime = millis() + 1000;
         }else if (targetTime < millis()){
           duration--;
-          targetTime = targetTime + 1000000;
+          targetTime = targetTime + 1000;
         }
       }
       state = 2;
@@ -285,5 +285,6 @@ void loop() {
     message = 10000;
     break;
   }
+  long a = 1000+millis();
   Serial.println(duration);
   }
