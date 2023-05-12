@@ -53,11 +53,14 @@ int bounceState = 0; //0 for off, 1 for on
 boolean timerDir = 0; //0 for count down, 1 for count up
 long timerReset = 0;
 long targetTime = 0;
+long displayLetterTime = 0;
 
 uint16_t number[] = {0x0C3F,0x0406,0x00DB,0x008F,0x00E6,
                    /* 0      1      2       3       4*/
                      0x00ED,0x00FD,0x01401,0x00FF,0x00EF};
                    /* 5      6      7      8         9 */
+uint16_t letter[] = {0x00F7, 0x120F, 0x00BD, 0x2136, 0x00F3, 0x1201};
+                   /*  A       D        G       N       P       S*/
 
 int rotary(int CLK, int DT, boolean lastStateCLK){
   boolean currentStateCLK = digitalRead(CLK);
@@ -76,16 +79,16 @@ int rotary(int CLK, int DT, boolean lastStateCLK){
 
 byte smallLed(int speedValue, int angleValue, int axis){
   int ledRegister = 0;
-  if (speedValue > 1){
+  if (speedValue > 3){
     bitSet(ledRegister, 3);
   }
-  if (speedValue == 3){
+  if (speedValue > 6){
     bitSet(ledRegister, 2);
   }
-  if (angleValue > 1){
+  if (angleValue > 3){
     bitSet(ledRegister, 0);
   }
-  if (angleValue == 3){
+  if (angleValue > 6){
     bitSet(ledRegister, 1);
   }
   switch (axis){
@@ -116,6 +119,22 @@ void ledDisplay(int duration){
   alpha4.writeDigitRaw(1, number[durationMin]);
   alpha4.writeDigitRaw(2, number[durationSec1]);
   alpha4.writeDigitRaw(3, number[durationSec]);
+  alpha4.writeDisplay();
+}
+
+void angleDisplay(int num){
+  alpha4.writeDigitRaw(0, letter[1]);
+  alpha4.writeDigitRaw(1, letter[4]);
+  alpha4.writeDigitRaw(2, letter[3]);
+  alpha4.writeDigitRaw(3, number[num]);
+  alpha4.writeDisplay();
+}
+
+void speedDisplay(int num){
+  alpha4.writeDigitRaw(0, letter[6]);
+  alpha4.writeDigitRaw(1, letter[5]);
+  alpha4.writeDigitRaw(2, letter[2]);
+  alpha4.writeDigitRaw(3, number[num]);
   alpha4.writeDisplay();
 }
 
@@ -188,7 +207,9 @@ void loop() {
   }
   
   if (powerState){
-    ledDisplay(duration);
+    if (displayLetterTime < millis()){
+      ledDisplay(duration);
+    }
     state = 1;
     digitalWrite(latchPin, LOW);
     shiftOut(dataPin, clockPin, LSBFIRST, ledRegister);
@@ -227,17 +248,25 @@ void loop() {
       lastStateAngleCLK = digitalRead(angle_CLK);
       lastStateSpeedCLK = digitalRead(speed_CLK);
       lastStateTimeCLK = digitalRead(time_CLK);
-      if (angleDir == 1 && outputAngleValue < 3){
+      if (angleDir == 1 && outputAngleValue < 9){
         outputAngleValue++;
+        displayLetterTime = millis() + 3000;
+        angleDisplay(outputAngleValue);
       }
       if (angleDir == -1 && outputAngleValue > 1){
         outputAngleValue--;
+        displayLetterTime = millis() + 3000;
+        angleDisplay(outputAngleValue);
       }
-      if (speedDir == 1 && outputSpeedValue < 3){
+      if (speedDir == 1 && outputSpeedValue < 9){
         outputSpeedValue++;
+        displayLetterTime = millis() + 3000;
+        speedDisplay(outputSpeedValue);
       }
       if (speedDir == -1 && outputSpeedValue > 1){
         outputSpeedValue--;
+        displayLetterTime = millis() + 3000;
+        speedDisplay(outputSpeedValue);
       }
       if (timeDir == 1 && duration < 5999){
         duration += 60;
