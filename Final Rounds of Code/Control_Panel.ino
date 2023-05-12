@@ -59,8 +59,6 @@ uint16_t number[] = {0x0C3F,0x0406,0x00DB,0x008F,0x00E6,
                    /* 0      1      2       3       4*/
                      0x00ED,0x00FD,0x01401,0x00FF,0x00EF};
                    /* 5      6      7      8         9 */
-uint16_t letter[] = {0x00F7, 0x120F, 0x00BD, 0x2136, 0x00F3, 0x1201};
-                   /*  A       D        G       N       P       S*/
 
 int rotary(int CLK, int DT, boolean lastStateCLK){
   boolean currentStateCLK = digitalRead(CLK);
@@ -123,17 +121,17 @@ void ledDisplay(int duration){
 }
 
 void angleDisplay(int num){
-  alpha4.writeDigitRaw(0, letter[1]);
-  alpha4.writeDigitRaw(1, letter[4]);
-  alpha4.writeDigitRaw(2, letter[3]);
+  alpha4.writeDigitRaw(0, 0x00F7);
+  alpha4.writeDigitRaw(1, 0x2136);
+  alpha4.writeDigitRaw(2, 0x00BD);
   alpha4.writeDigitRaw(3, number[num]);
   alpha4.writeDisplay();
 }
 
 void speedDisplay(int num){
-  alpha4.writeDigitRaw(0, letter[6]);
-  alpha4.writeDigitRaw(1, letter[5]);
-  alpha4.writeDigitRaw(2, letter[2]);
+  alpha4.writeDigitRaw(0, 0x018D);
+  alpha4.writeDigitRaw(1, 0x00F3);
+  alpha4.writeDigitRaw(2, 0x120F);
   alpha4.writeDigitRaw(3, number[num]);
   alpha4.writeDisplay();
 }
@@ -250,22 +248,22 @@ void loop() {
       lastStateTimeCLK = digitalRead(time_CLK);
       if (angleDir == 1 && outputAngleValue < 9){
         outputAngleValue++;
-        displayLetterTime = millis() + 3000;
+        displayLetterTime = millis() + 2000;
         angleDisplay(outputAngleValue);
       }
       if (angleDir == -1 && outputAngleValue > 1){
         outputAngleValue--;
-        displayLetterTime = millis() + 3000;
+        displayLetterTime = millis() + 2000;
         angleDisplay(outputAngleValue);
       }
       if (speedDir == 1 && outputSpeedValue < 9){
         outputSpeedValue++;
-        displayLetterTime = millis() + 3000;
+        displayLetterTime = millis() + 2000;
         speedDisplay(outputSpeedValue);
       }
       if (speedDir == -1 && outputSpeedValue > 1){
         outputSpeedValue--;
-        displayLetterTime = millis() + 3000;
+        displayLetterTime = millis() + 2000;
         speedDisplay(outputSpeedValue);
       }
       if (timeDir == 1 && duration < 5999){
