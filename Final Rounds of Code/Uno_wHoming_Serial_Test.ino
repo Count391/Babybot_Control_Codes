@@ -86,7 +86,7 @@ void setup() {
     Serial.println("Murata SCL3300 inclinometer not connected.");
     while(1); //Freeze
   }
-  
+  home_status = 0;
 
 }
 
