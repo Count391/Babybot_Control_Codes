@@ -266,10 +266,10 @@ void loop() {
         displayLetterTime = millis() + 2000;
         speedDisplay(outputSpeedValue);
       }
-      if (timeDir == 1 && duration < 5999){
+      if (timeDir == 1 && duration < 5939){
         duration += 60;
       }
-      if (timeDir == -1 && duration > 0){
+      if (timeDir == -1 && duration > 30){
         duration -= 30;
       }
     }
@@ -312,5 +312,5 @@ void loop() {
     message = 10000;
     break;
   }
-  Serial.println(message);
+  Serial.println(duration);
   }
