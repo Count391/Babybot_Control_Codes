@@ -190,7 +190,7 @@ if(button5.isPressed() && currentLED == 5){
   Serial.println(currentLED);
   }
 
-if(button5.isPressed() && currentLED != 1){
+if(button5.isPressed() && currentLED != 5){
   currentTimer = millis();
   if(currentTimer - lastToggle > 1000){  
     Serial.print("Wrong Button, Press ");
