@@ -81,7 +81,7 @@ int btn5State = button5.getState();
 
 if(button1.isPressed() && currentLED == 1){
   while (count < 10){
-    toggleLED(400);
+    toggleLED(300);
   }
   count = 0;
   digitalWrite(ledPin1,LOW);
@@ -97,7 +97,7 @@ if(button1.isPressed() && currentLED != 1){
     Serial.print("Wrong Button, Press ");
     Serial.println(currentLED);
     while (count < 20){
-      toggleLED(100);
+      toggleLED(150);
     }    
     digitalWrite(pinNumberOutput[currentLED-1],HIGH); 
     count = 0;
@@ -105,7 +105,7 @@ if(button1.isPressed() && currentLED != 1){
 }
 if(button2.isPressed() && currentLED == 2){
   while (count < 10){
-    toggleLED(400);
+    toggleLED(300);
   }
   count = 0;
   digitalWrite(ledPin2,LOW);
@@ -121,7 +121,7 @@ if(button2.isPressed() && currentLED != 2){
     Serial.print("Wrong Button, Press ");
     Serial.println(currentLED);
     while (count < 20){
-      toggleLED(100);
+      toggleLED(150);
     }    
     digitalWrite(pinNumberOutput[currentLED-1],HIGH); 
     count = 0;
@@ -130,7 +130,7 @@ if(button2.isPressed() && currentLED != 2){
 
 if(button3.isPressed() && currentLED == 3){
   while (count < 10){
-    toggleLED(400);
+    toggleLED(300);
   }
   count = 0;
   digitalWrite(ledPin3,LOW);
@@ -146,7 +146,7 @@ if(button3.isPressed() && currentLED != 3){
     Serial.print("Wrong Button, Press ");
     Serial.println(currentLED);
     while (count < 20){
-      toggleLED(100);
+      toggleLED(150);
     }    
     digitalWrite(pinNumberOutput[currentLED-1],HIGH); 
     count = 0;
@@ -155,7 +155,7 @@ if(button3.isPressed() && currentLED != 3){
 
 if(button4.isPressed() && currentLED == 4){
   while (count < 10){
-    toggleLED(400);
+    toggleLED(300);
   }
   count = 0;
   digitalWrite(ledPin4,LOW);
@@ -171,7 +171,7 @@ if(button4.isPressed() && currentLED != 4){
     Serial.print("Wrong Button, Press ");
     Serial.println(currentLED);
     while (count < 20){
-      toggleLED(200);
+      toggleLED(150);
     }    
     digitalWrite(pinNumberOutput[currentLED-1],HIGH); 
     count = 0;
@@ -180,7 +180,7 @@ if(button4.isPressed() && currentLED != 4){
 
 if(button5.isPressed() && currentLED == 5){
   while (count < 10){
-    toggleLED(400);
+    toggleLED(300);
   }
   count = 0;
   digitalWrite(ledPin5,LOW);
@@ -196,7 +196,7 @@ if(button5.isPressed() && currentLED != 5){
     Serial.print("Wrong Button, Press ");
     Serial.println(currentLED);
     while (count < 20){
-      toggleLED(100);
+      toggleLED(150);
     }    
     digitalWrite(pinNumberOutput[currentLED-1],HIGH); 
     count = 0;
