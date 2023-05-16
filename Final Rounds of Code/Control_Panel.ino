@@ -3,6 +3,12 @@
 #include <Adafruit_GFX.h>
 #include <ezButton.h>
 #include "Adafruit_LEDBackpack.h"
+#include <SoftwareSerial.h>
+
+#define rxPin 0
+#define txPin 1
+
+SoftwareSerial mySerial = SoftwareSerial(rxPin, txPin);
 
 Adafruit_AlphaNum4 alpha4 = Adafruit_AlphaNum4();
 
@@ -56,7 +62,8 @@ uint16_t letter[] = {0x00F7, 0x120F, 0x00BD, 0x2136, 0x00F3, 0x1201,
                    /*H       I        B       Y      O       T*/
 
 int rotary(int CLK, int DT, boolean lastStateCLK){
-  boolean currentStateCLK = digitalRead(CLK);
+boolean currentStateCLK = digitalRead(CLK);
+boolean powerInd = 1;
 
   if (currentStateCLK != lastStateCLK  && currentStateCLK == 1){
     if (digitalRead(DT) != currentStateCLK) {
@@ -130,8 +137,8 @@ void letterDisplay(int angleDir, int speedDir, int angleValue, int speedValue){
     alpha4.writeDigitRaw(3, number[speedValue]);
     alpha4.writeDisplay();
   }
-  Serial.write(30 + speedValue);
-  Serial.write(20 + angleValue);
+  mySerial.write(30 + speedValue);
+  mySerial.write(20 + angleValue);
 }
 
 void welcome(){
@@ -187,7 +194,7 @@ long durationBoundaryCheck(long duration){
 
 // Setup function
 void setup() {
-  Serial.begin(9600);
+  mySerial.begin(9600);
   alpha4.begin(0x70);
   power.setDebounceTime(50); // set debounce time to 50 milliseconds
   play.setDebounceTime(50);
@@ -226,8 +233,9 @@ void loop() {
   
   powerState = !(power.getState());                       //Check power state
 
-  if (power.isReleased()){
+  if (powerInd && powerState){
     welcome();
+    powerInd = !powerInd;
   }
 
   if (powerState){
@@ -239,19 +247,19 @@ void loop() {
     if (play.isReleased()){                               //Check pause state
       if (startState){
         if (bounceState){
-          Serial.write(53);
+          mySerial.write(53);
         }else{
-          Serial.write(51);
+          mySerial.write(51);
         }
       }else{
-        Serial.write(52);
+        mySerial.write(52);
       }
       startState = !startState;
     }
     if (!startState){
       if (motion.isPressed() || motion.isReleased()){
         motionState = motion.getState();                    //Check for button pushing
-        Serial.write(40 + motionState);
+        mySerial.write(40 + motionState);
       }
       bounceState = bounce.getState();
       if (axis.isReleased()){
@@ -260,7 +268,7 @@ void loop() {
         }else{
           axisState = 0;
         }
-        Serial.write(10 + axisState);
+        mySerial.write(10 + axisState);
       }
       int angleDir = rotary(angle_CLK, angle_DT, lastStateAngleCLK); //Check rotary encoder inputs
       int speedDir = rotary(speed_CLK, speed_DT, lastStateSpeedCLK);
@@ -291,14 +299,15 @@ void loop() {
         duration = 0;
       }
     }else{                                                //When started, time flows
-      Serial.write(52);
+      mySerial.write(52);
       if (targetTime < millis()){
         targetTime = millis() + 1000;
         duration = duration + timerDir;
       }
     }
   }else{
-    Serial.write(50);
+    mySerial.write(50);
+    powerInd = 1;
     alpha4.clear();
     alpha4.writeDisplay();
     targetTime = 0;
