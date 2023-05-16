@@ -231,16 +231,24 @@ void loop() {
   }
 
   if (powerState){
+    ledRegister = smallLed(outputSpeedValue, outputAngleValue, axisState);
     digitalWrite(latchPin, LOW);                          //Use shift register to light up small LEDs
     shiftOut(dataPin, clockPin, LSBFIRST, ledRegister);
     digitalWrite(latchPin, HIGH);
     digitalWrite(ledPin, HIGH);
-    ledRegister = smallLed(outputSpeedValue, outputAngleValue, axisState);
     if (play.isReleased()){                               //Check pause state
+      if (startState){
+        if (bounceState){
+          Serial.write(53);
+        }else{
+          Serial.write(51);
+        }
+      }else{
+        Serial.write(52);
+      }
       startState = !startState;
     }
     if (!startState){
-      Serial.write(51);
       if (motion.isPressed() || motion.isReleased()){
         motionState = motion.getState();                    //Check for button pushing
         Serial.write(40 + motionState);
@@ -283,11 +291,7 @@ void loop() {
         duration = 0;
       }
     }else{                                                //When started, time flows
-      if (bounceState){
-        Serial.write(53);
-      }else{
-        Serial.write(52);
-      }
+      Serial.write(52);
       if (targetTime < millis()){
         targetTime = millis() + 1000;
         duration = duration + timerDir;
