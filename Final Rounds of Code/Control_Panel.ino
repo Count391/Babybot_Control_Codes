@@ -34,7 +34,7 @@ int outputAngleValue = 1;
 int outputSpeedValue = 1;
 boolean powerState = 0;
 boolean startState = 0;
-int axisState = 0; //0 for pitch, 1 for roll, 2 for combine
+int axisState = 0; //0 for combined, 1 for roll, 2 for pitch
 boolean motionState = 0; //0 for auto mode, 1 for baby mode
 int duration = 845;
 boolean speedRotaryState = 0;
@@ -50,8 +50,10 @@ uint16_t number[] = {0x0C3F,0x0406,0x00DB,0x008F,0x00E6,
                    /* 0      1      2       3       4*/
                      0x00ED,0x00FD,0x01401,0x00FF,0x00EF};
                    /* 5      6      7      8         9 */
-uint16_t letter[] = {0x00F7, 0x120F, 0x00BD, 0x2136, 0x00F3, 0x1201};
+uint16_t letter[] = {0x00F7, 0x120F, 0x00BD, 0x2136, 0x00F3, 0x1201, 
                    /*  A       D        G       N       P       S*/
+                   0x00F6, 0x1209, 0x128F, 0x1500, 0x003F, 0x1201};
+                   /*H       I        B       Y      O       T*/
 
 int rotary(int CLK, int DT, boolean lastStateCLK){
   boolean currentStateCLK = digitalRead(CLK);
@@ -132,6 +134,37 @@ void letterDisplay(int angleDir, int speedDir, int angleValue, int speedValue){
   Serial.write(20 + angleValue);
 }
 
+void welcome(){
+    alpha4.writeDigitRaw(1, letter[7]);
+    alpha4.writeDigitRaw(2, letter[8]);
+    alpha4.writeDisplay();
+    delay(1500);
+    alpha4.writeDigitRaw(0, letter[9]);
+    alpha4.writeDigitRaw(1, letter[1]);
+    alpha4.writeDigitRaw(2, letter[9]);
+    alpha4.writeDigitRaw(3, letter[10]);
+    alpha4.writeDisplay();
+    delay(700);
+    alpha4.writeDigitRaw(0, letter[1]);
+    alpha4.writeDigitRaw(1, letter[9]);
+    alpha4.writeDigitRaw(2, letter[10]);
+    alpha4.writeDigitRaw(3, letter[9]);
+    alpha4.writeDisplay();
+    delay(700);
+    alpha4.writeDigitRaw(0, letter[9]);
+    alpha4.writeDigitRaw(1, letter[10]);
+    alpha4.writeDigitRaw(2, letter[9]);
+    alpha4.writeDigitRaw(3, letter[11]);
+    alpha4.writeDisplay();
+    delay(700);
+    alpha4.writeDigitRaw(0, letter[10]);
+    alpha4.writeDigitRaw(1, letter[9]);
+    alpha4.writeDigitRaw(2, letter[11]);
+    alpha4.writeDigitRaw(3, letter[12]);
+    alpha4.writeDisplay();
+    delay(1000);
+}
+
 int AngSpdBoundaryCheck(int num){
   if (num == 0){
     return 1;
@@ -192,6 +225,10 @@ void loop() {
   byte ledRegister = 0;
   
   powerState = !(power.getState());                       //Check power state
+
+  if (power.isReleased()){
+    welcome();
+  }
 
   if (powerState){
     digitalWrite(latchPin, LOW);                          //Use shift register to light up small LEDs
@@ -272,9 +309,9 @@ void loop() {
     digitalWrite(latchPin, HIGH);
   }
   if (timerDir == -1 && duration < 0){
-    Serial.write(51);
+    startState = 0;
     duration = 845;
   }else if (timerDir == 1 && duration >= 5998){
-    Serial.write(51);
+    startState = 0;
   }
 }
