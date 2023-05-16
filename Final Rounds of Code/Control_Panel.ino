@@ -3,12 +3,6 @@
 #include <Adafruit_GFX.h>
 #include <ezButton.h>
 #include "Adafruit_LEDBackpack.h"
-#include <SoftwareSerial.h>
-
-#define rxPin 0
-#define txPin 1
-
-SoftwareSerial mySerial = SoftwareSerial(rxPin, txPin);
 
 Adafruit_AlphaNum4 alpha4 = Adafruit_AlphaNum4();
 
@@ -19,6 +13,7 @@ ezButton bounce(5); // Bounce Toggle
 ezButton motion(9);   // Baby/Auto Mode
 ezButton axis(11);  // Toggle 3 axis choices
 ezButton timer(12); // Timer press in
+//Assign Pin numbers
 #define speed_DT A5
 #define speed_CLK A4
 #define angle_DT A3
@@ -37,35 +32,26 @@ ezButton timer(12); // Timer press in
 int timer_state = 0;  //Crono = 1, stopwatch = 0
 int outputAngleValue = 1;
 int outputSpeedValue = 1;
-int state = 0;
-long message = 0;
-/*
- * message bit meaning from left to right:
- * 1. Motion type
- * 2. Axis
- * 3. Angle
- * 4. Speed
- * 5. Bounce
- */
 boolean powerState = 0;
 boolean startState = 0;
-int axisState = 3; //1 for pitch, 2 for roll, 3 for combine
+int axisState = 0; //0 for pitch, 1 for roll, 2 for combine
 boolean motionState = 0; //0 for auto mode, 1 for baby mode
 int duration = 845;
 boolean speedRotaryState = 0;
 boolean angleRotaryState = 0;
 boolean timeRotaryState = 0;
 int bounceState = 0; //0 for off, 1 for on
-boolean timerDir = 0; //0 for count down, 1 for count up
+int timerDir = -1; //-1 for count down, 1 for count up
 long timerReset = 0;
 long targetTime = 0;
 long displayLetterTime = 0;
-int sent = 0;
 
 uint16_t number[] = {0x0C3F,0x0406,0x00DB,0x008F,0x00E6,
                    /* 0      1      2       3       4*/
                      0x00ED,0x00FD,0x01401,0x00FF,0x00EF};
                    /* 5      6      7      8         9 */
+uint16_t letter[] = {0x00F7, 0x120F, 0x00BD, 0x2136, 0x00F3, 0x1201};
+                   /*  A       D        G       N       P       S*/
 
 int rotary(int CLK, int DT, boolean lastStateCLK){
   boolean currentStateCLK = digitalRead(CLK);
@@ -127,26 +113,48 @@ void ledDisplay(int duration){
   alpha4.writeDisplay();
 }
 
-void angleDisplay(int num){
-  alpha4.writeDigitRaw(0, 0x00F7);
-  alpha4.writeDigitRaw(1, 0x2136);
-  alpha4.writeDigitRaw(2, 0x00BD);
-  alpha4.writeDigitRaw(3, number[num]);
-  alpha4.writeDisplay();
+void letterDisplay(int angleDir, int speedDir, int angleValue, int speedValue){
+  if (angleDir != 0){
+    alpha4.writeDigitRaw(0, letter[1]);
+    alpha4.writeDigitRaw(1, letter[4]);
+    alpha4.writeDigitRaw(2, letter[3]);
+    alpha4.writeDigitRaw(3, number[angleValue]);
+    alpha4.writeDisplay();
+  }
+  if (speedDir != 0){
+    alpha4.writeDigitRaw(0, letter[6]);
+    alpha4.writeDigitRaw(1, letter[5]);
+    alpha4.writeDigitRaw(2, letter[2]);
+    alpha4.writeDigitRaw(3, number[speedValue]);
+    alpha4.writeDisplay();
+  }
+  Serial.write(30 + speedValue);
+  Serial.write(20 + angleValue);
 }
 
-void speedDisplay(int num){
-  alpha4.writeDigitRaw(0, 0x018D);
-  alpha4.writeDigitRaw(1, 0x00F3);
-  alpha4.writeDigitRaw(2, 0x120F);
-  alpha4.writeDigitRaw(3, number[num]);
-  alpha4.writeDisplay();
+int AngSpdBoundaryCheck(int num){
+  if (num == 0){
+    return 1;
+  }
+  if (num == 10){
+    return 9;
+  }
+  return num;
+}
+
+long durationBoundaryCheck(long duration){
+  if (duration < 0){
+    return 0;
+  }
+  if (duration > 5999){
+    return 5999;
+  }
+  return duration;
 }
 
 // Setup function
 void setup() {
   Serial.begin(9600);
-  mySerial.begin(9600);
   alpha4.begin(0x70);
   power.setDebounceTime(50); // set debounce time to 50 milliseconds
   play.setDebounceTime(50);
@@ -183,125 +191,79 @@ void loop() {
   timer.loop();
   byte ledRegister = 0;
   
-  powerState = !(power.getState());
+  powerState = !(power.getState());                       //Check power state
 
   if (powerState){
-    ledRegister = smallLed(outputSpeedValue, outputAngleValue, axisState);
-    if (play.isReleased()){
-      startState = !startState;
-    }
-    if (!startState){
-      if (timer.isReleased()){
-        timerDir = !timerDir;
-        timerReset = 0;
-      }
-      if (!(timer.getState()) && timerReset == 0){
-        timerReset = millis() + 3000;
-      }else if (!(timer.getState()) && timerReset < millis()){
-        duration = 0;
-      }
-      motionState = motion.getState();
-      if (axis.isReleased()){
-        if (axisState < 3){
-          axisState++;
-        }else{
-          axisState = 1;
-        }
-        mySerial.write(30+axisState);
-      }
-      bounceState = bounce.getState();
-    }
-  }
-  
-  if (powerState){
-    if (displayLetterTime < millis()){
-      ledDisplay(duration);
-    }
-    state = 1;
-    digitalWrite(latchPin, LOW);
+    digitalWrite(latchPin, LOW);                          //Use shift register to light up small LEDs
     shiftOut(dataPin, clockPin, LSBFIRST, ledRegister);
     digitalWrite(latchPin, HIGH);
     digitalWrite(ledPin, HIGH);
-    if (startState){
-      if (!sent) {
-        mySerial.write(10+outputSpeedValue);
-        mySerial.write(20+outputAngleValue);
-        mySerial.write(40+bounceState);
-        mySerial.write(100);
-        sent = 1;
+    ledRegister = smallLed(outputSpeedValue, outputAngleValue, axisState);
+    if (play.isReleased()){                               //Check pause state
+      startState = !startState;
+    }
+    if (!startState){
+      Serial.write(51);
+      if (motion.isPressed() || motion.isReleased()){
+        motionState = motion.getState();                    //Check for button pushing
+        Serial.write(40 + motionState);
       }
-      if (timerDir){
-        if (targetTime == 0){
-          targetTime = millis() + 1000;
+      bounceState = bounce.getState();
+      if (axis.isReleased()){
+        if (axisState < 2){
+          axisState++;
+        }else{
+          axisState = 0;
         }
-        if (targetTime < millis()){
-          duration++;
-          targetTime = targetTime + 1000;
-        }
-      }else{
-        if (targetTime == 0){           // Counting down
-          targetTime = millis() + 1000;
-        }else if (targetTime < millis()){
-          duration--;
-          targetTime = targetTime + 1000;
-        }
+        Serial.write(10 + axisState);
       }
-      state = 2;
-      if (axisState == 1){
-        state = 3;
-      }else if (axisState == 2){
-        state = 4;
-      }
-      if (motionState){
-        state = 5;
-      }
-    }else{
-      if (sent) {
-        mySerial.write(101);
-        sent = 0;
-      }
-      targetTime = 0;
-      int angleDir = rotary(angle_CLK, angle_DT, lastStateAngleCLK);
+      int angleDir = rotary(angle_CLK, angle_DT, lastStateAngleCLK); //Check rotary encoder inputs
       int speedDir = rotary(speed_CLK, speed_DT, lastStateSpeedCLK);
       int timeDir = rotary(time_CLK, time_DT, lastStateTimeCLK);
       lastStateAngleCLK = digitalRead(angle_CLK);
       lastStateSpeedCLK = digitalRead(speed_CLK);
       lastStateTimeCLK = digitalRead(time_CLK);
-      if (angleDir == 1 && outputAngleValue < 9){
-        outputAngleValue++;
-        displayLetterTime = millis() + 2000;
-        angleDisplay(outputAngleValue);
+      outputAngleValue = outputAngleValue + angleDir;     //Change the output values
+      outputSpeedValue = outputSpeedValue + speedDir;
+      duration = outputAngleValue + timeDir * 30;
+      outputAngleValue = AngSpdBoundaryCheck(outputAngleValue);
+      outputSpeedValue = AngSpdBoundaryCheck(outputSpeedValue);
+      duration = durationBoundaryCheck(duration);
+      if (angleDir != 0 || speedDir != 0){                //Display changes
+        displayLetterTime = millis() + 3000;
+        letterDisplay(angleDir, speedDir, outputAngleValue, outputSpeedValue);
       }
-      if (angleDir == -1 && outputAngleValue > 1){
-        outputAngleValue--;
-        displayLetterTime = millis() + 2000;
-        angleDisplay(outputAngleValue);
+      if (displayLetterTime < millis()){                  //Display time if no recent change in angle and speed
+        ledDisplay(duration);
       }
-      if (speedDir == 1 && outputSpeedValue < 9){
-        outputSpeedValue++;
-        displayLetterTime = millis() + 2000;
-        speedDisplay(outputSpeedValue);
+      if (timer.isReleased()){                            //Flip timer direction once timer knob is pushed
+        timerDir = (-1) * timerDir;
+        timerReset = 0;
       }
-      if (speedDir == -1 && outputSpeedValue > 1){
-        outputSpeedValue--;
-        displayLetterTime = millis() + 2000;
-        speedDisplay(outputSpeedValue);
+      if (!(timer.getState()) && timerReset == 0){        //Reset timer to 0 when hold for 2.5s
+        timerReset = millis() + 2500;
+      }else if (!(timer.getState()) && timerReset < millis()){
+        duration = 0;
       }
-      if (timeDir == 1 && duration < 5939){
-        duration += 60;
+    }else{                                                //When started, time flows
+      if (bounceState){
+        Serial.write(53);
+      }else{
+        Serial.write(52);
       }
-      if (timeDir == -1 && duration > 30){
-        duration -= 30;
+      if (targetTime < millis()){
+        targetTime = millis() + 1000;
+        duration = duration + timerDir;
       }
     }
   }else{
+    Serial.write(50);
     alpha4.clear();
     alpha4.writeDisplay();
     targetTime = 0;
     outputSpeedValue = 1;
     outputAngleValue = 1;
     startState = 0;
-    state = 1;
     duration = 845;
     digitalWrite(ledPin, LOW);
     ledRegister = 0;
@@ -309,32 +271,10 @@ void loop() {
     shiftOut(dataPin, clockPin, LSBFIRST, ledRegister);
     digitalWrite(latchPin, HIGH);
   }
-  if (!timerDir && duration < 0){
-    startState = 0;
+  if (timerDir == -1 && duration < 0){
+    Serial.write(51);
     duration = 845;
-  }else if (timerDir && duration >= 5998){
-    startState = 0;
+  }else if (timerDir == 1 && duration >= 5998){
+    Serial.write(51);
   }
-
-  switch (state){
-    case 1:
-    message = 0;
-    break;
-    case 2:
-    message = 100;
-    //message = 1000 + bounceState*100 + outputAngleValue * 10 + outputSpeedValue;
-    break;
-    case 3:
-    message = 200;
-    //message = 2000 + bounceState*100 + outputAngleValue * 10 + outputSpeedValue;
-    break;
-    case 4:
-    message = 256;
-    //message = 3000 + bounceState*100 + outputAngleValue * 10 + outputSpeedValue;
-    break;
-    case 5:
-    message = 4;
-    break;
-  }
-//  mySerial.write(message);
-  }
+}
