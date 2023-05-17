@@ -35,6 +35,7 @@ ezButton timer(12); // Timer press in
 #define dataPin 8
 
 // Initializing variables
+boolean powerInd = 1;
 int timer_state = 0;  //Crono = 1, stopwatch = 0
 int outputAngleValue = 1;
 int outputSpeedValue = 1;
@@ -63,7 +64,6 @@ uint16_t letter[] = {0x00F7, 0x120F, 0x00BD, 0x2136, 0x00F3, 0x1201,
 
 int rotary(int CLK, int DT, boolean lastStateCLK){
 boolean currentStateCLK = digitalRead(CLK);
-boolean powerInd = 1;
 
   if (currentStateCLK != lastStateCLK  && currentStateCLK == 1){
     if (digitalRead(DT) != currentStateCLK) {
@@ -246,11 +246,7 @@ void loop() {
     digitalWrite(ledPin, HIGH);
     if (play.isReleased()){                               //Check pause state
       if (startState){
-        if (bounceState){
-          mySerial.write(53);
-        }else{
-          mySerial.write(51);
-        }
+        mySerial.write(51);
       }else{
         mySerial.write(52);
       }
@@ -261,7 +257,9 @@ void loop() {
         motionState = motion.getState();                    //Check for button pushing
         mySerial.write(40 + motionState);
       }
-      bounceState = bounce.getState();
+      if (bounce.isReleased() || bounce.isPressed(){
+        mySerial.write(53);
+      }
       if (axis.isReleased()){
         if (axisState < 2){
           axisState++;
@@ -278,7 +276,7 @@ void loop() {
       lastStateTimeCLK = digitalRead(time_CLK);
       outputAngleValue = outputAngleValue + angleDir;     //Change the output values
       outputSpeedValue = outputSpeedValue + speedDir;
-      duration = outputAngleValue + timeDir * 30;
+      duration = duration + timeDir * 30;
       outputAngleValue = AngSpdBoundaryCheck(outputAngleValue);
       outputSpeedValue = AngSpdBoundaryCheck(outputSpeedValue);
       duration = durationBoundaryCheck(duration);
@@ -299,7 +297,6 @@ void loop() {
         duration = 0;
       }
     }else{                                                //When started, time flows
-      mySerial.write(52);
       if (targetTime < millis()){
         targetTime = millis() + 1000;
         duration = duration + timerDir;
