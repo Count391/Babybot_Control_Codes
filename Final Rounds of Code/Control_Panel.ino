@@ -57,10 +57,15 @@ uint16_t number[] = {0x0C3F,0x0406,0x00DB,0x008F,0x00E6,
                    /* 0      1      2       3       4*/
                      0x00ED,0x00FD,0x01401,0x00FF,0x00EF};
                    /* 5      6      7      8         9 */
-uint16_t letter[] = {0x00F7, 0x120F, 0x00BD, 0x2136, 0x00F3, 0x1201, 
-                   /*  A       D        G       N       P       S*/
-                   0x00F6, 0x1209, 0x128F, 0x1500, 0x003F, 0x1201};
-                   /*H       I        B       Y      O       T*/
+                   
+                   /* A/0    B/1    C/2    D/3    E/4    F/5    G/6 */
+uint16_t letter[] = {0x00F7,0x128F,0x0039,0x120F,0x00F9,0x00F1,0x00BD,
+                   /* H/7    I/8    J/9    K/10  L/11   M/12   N/13 */
+                     0x00F6,0x1209,0x001E,0x2470,0x0038,0x0536,0x2136,
+                   /* O/14  P/15   Q/16   R/17   S/18   T/19   U/20 */
+                     0x003F,0x00F3,0x203F,0x20F3,0x018D,0x1201,0x003E,
+                   /* V/21  W/22   X/23   Y/24   Z/25 */
+                     0x0C30,0x2836,0x2D00,0x1500,0x0C09};
 
 int rotary(int CLK, int DT, boolean lastStateCLK){
 boolean currentStateCLK = digitalRead(CLK);
@@ -124,16 +129,16 @@ void ledDisplay(int duration){
 
 void letterDisplay(int angleDir, int speedDir, int angleValue, int speedValue){
   if (angleDir != 0){
-    alpha4.writeDigitRaw(0, letter[1]);
-    alpha4.writeDigitRaw(1, letter[4]);
-    alpha4.writeDigitRaw(2, letter[3]);
+    alpha4.writeDigitRaw(0, letter[0]);
+    alpha4.writeDigitRaw(1, letter[13]);
+    alpha4.writeDigitRaw(2, 0x0000);
     alpha4.writeDigitRaw(3, number[angleValue]);
     alpha4.writeDisplay();
   }
   if (speedDir != 0){
-    alpha4.writeDigitRaw(0, letter[6]);
-    alpha4.writeDigitRaw(1, letter[5]);
-    alpha4.writeDigitRaw(2, letter[2]);
+    alpha4.writeDigitRaw(0, letter[18]);
+    alpha4.writeDigitRaw(1, letter[15]);
+    alpha4.writeDigitRaw(2, 0x0000);
     alpha4.writeDigitRaw(3, number[speedValue]);
     alpha4.writeDisplay();
   }
@@ -142,32 +147,32 @@ void letterDisplay(int angleDir, int speedDir, int angleValue, int speedValue){
 }
 
 void welcome(){
-    alpha4.writeDigitRaw(1, letter[7]);
-    alpha4.writeDigitRaw(2, letter[8]);
+    alpha4.writeDigitRaw(1, letter[1]);
+    alpha4.writeDigitRaw(2, letter[1]);
     alpha4.writeDisplay();
     delay(1500);
-    alpha4.writeDigitRaw(0, letter[9]);
-    alpha4.writeDigitRaw(1, letter[1]);
-    alpha4.writeDigitRaw(2, letter[9]);
-    alpha4.writeDigitRaw(3, letter[10]);
-    alpha4.writeDisplay();
-    delay(700);
-    alpha4.writeDigitRaw(0, letter[1]);
-    alpha4.writeDigitRaw(1, letter[9]);
-    alpha4.writeDigitRaw(2, letter[10]);
-    alpha4.writeDigitRaw(3, letter[9]);
-    alpha4.writeDisplay();
-    delay(700);
-    alpha4.writeDigitRaw(0, letter[9]);
-    alpha4.writeDigitRaw(1, letter[10]);
-    alpha4.writeDigitRaw(2, letter[9]);
-    alpha4.writeDigitRaw(3, letter[11]);
-    alpha4.writeDisplay();
-    delay(700);
-    alpha4.writeDigitRaw(0, letter[10]);
-    alpha4.writeDigitRaw(1, letter[9]);
+    alpha4.writeDigitRaw(0, letter[22]);
+    alpha4.writeDigitRaw(1, letter[4]);
     alpha4.writeDigitRaw(2, letter[11]);
+    alpha4.writeDigitRaw(3, letter[2]);
+    alpha4.writeDisplay();
+    delay(700);
+    alpha4.writeDigitRaw(0, letter[4]);
+    alpha4.writeDigitRaw(1, letter[11]);
+    alpha4.writeDigitRaw(2, letter[2]);
+    alpha4.writeDigitRaw(3, letter[14]);
+    alpha4.writeDisplay();
+    delay(700);
+    alpha4.writeDigitRaw(0, letter[11]);
+    alpha4.writeDigitRaw(1, letter[2]);
+    alpha4.writeDigitRaw(2, letter[14]);
     alpha4.writeDigitRaw(3, letter[12]);
+    alpha4.writeDisplay();
+    delay(700);
+    alpha4.writeDigitRaw(0, letter[2]);
+    alpha4.writeDigitRaw(1, letter[14]);
+    alpha4.writeDigitRaw(2, letter[12]);
+    alpha4.writeDigitRaw(3, letter[4]);
     alpha4.writeDisplay();
     delay(1000);
 }
@@ -257,7 +262,7 @@ void loop() {
         motionState = motion.getState();                    //Check for button pushing
         mySerial.write(40 + motionState);
       }
-      if (bounce.isReleased() || bounce.isPressed(){
+      if (bounce.isReleased() || bounce.isPressed()){
         mySerial.write(53);
       }
       if (axis.isReleased()){
@@ -300,6 +305,7 @@ void loop() {
       if (targetTime < millis()){
         targetTime = millis() + 1000;
         duration = duration + timerDir;
+        ledDisplay(duration);
       }
     }
   }else{
