@@ -36,6 +36,8 @@ ezButton timer(12); // Timer press in
 
 // Initializing variables
 boolean powerInd = 1;
+boolean pauseInd = 1;
+int pauseTime = 0;
 int timer_state = 0;  //Crono = 1, stopwatch = 0
 int outputAngleValue = 1;
 int outputSpeedValue = 1;
@@ -197,6 +199,11 @@ long durationBoundaryCheck(long duration){
   return duration;
 }
 
+void emptyLed(){
+  alpha4.clear();
+  alpha4.writeDisplay();
+}
+
 // Setup function
 void setup() {
   mySerial.begin(9600);
@@ -289,8 +296,14 @@ void loop() {
         displayLetterTime = millis() + 3000;
         letterDisplay(angleDir, speedDir, outputAngleValue, outputSpeedValue);
       }
-      if (displayLetterTime < millis()){                  //Display time if no recent change in angle and speed
-        ledDisplay(duration);
+      if (displayLetterTime < millis() && pauseTime < millis()){                  //Display time if no recent change in angle and speed
+        if (pauseInd){
+          ledDisplay(duration);
+        }else{
+          emptyLed();
+        }
+        pauseInd = !pauseInd;
+        pauseTime = millis() + 1000;
       }
       if (timer.isReleased()){                            //Flip timer direction once timer knob is pushed
         timerDir = (-1) * timerDir;
@@ -310,9 +323,10 @@ void loop() {
     }
   }else{
     mySerial.write(50);
+    mySerial.write(31);
+    mySerial.write(21);
     powerInd = 1;
-    alpha4.clear();
-    alpha4.writeDisplay();
+    emptyLed();
     targetTime = 0;
     outputSpeedValue = 1;
     outputAngleValue = 1;
