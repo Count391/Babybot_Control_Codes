@@ -17,7 +17,7 @@ int both_stop = 3;
 
 double roll = 0;
 double pitch =0;
-int home_status =0;
+int home_status;
 
 // Initialize Inclinometer
 SCL3300 inclinometer;
@@ -74,6 +74,40 @@ void pitchHoming(){
   mySerial.write(both_stop); // Stop motor
 }
 
+void checkExtremes() {
+   if(roll > 15){                // First extreme: Left tilted
+    mySerial.write(axis2_down);
+    while(roll > 10){
+      getAngles();
+    }
+    mySerial.write(both_stop);
+  }
+  Serial.println("First extreme checked");
+  if(roll < -15){               // Second extreme: Right tilted
+    mySerial.write(axis2_up);
+    while(roll < -10){
+      getAngles();
+    }
+    mySerial.write(both_stop);
+  }
+  Serial.println("Second extreme checked");
+  if(pitch > 20){               // Third extreme: Up tilted
+    mySerial.write(both_down);
+    while(pitch > 5){
+      getAngles();
+    }
+    mySerial.write(both_stop);
+  }
+  Serial.println("Third extreme checked");
+  if(pitch < -10){              // Fourth extreme: Down tilted
+    mySerial.write(both_up);
+    while(pitch < -5){
+      getAngles();
+    }
+    mySerial.write(both_stop);
+  }
+  Serial.println("Four extreme checked");
+}
   
 
 void setup() {
@@ -86,45 +120,14 @@ void setup() {
     Serial.println("Murata SCL3300 inclinometer not connected.");
     while(1); //Freeze
   }
-  home_status = 0;
-
+  int home_status = 0;
 }
 
 void loop() {
-  getAngles();
-  if(roll > 15){
-    mySerial.write(axis2_down);
-    while(roll > 10){
-      getAngles();
-    }
-    mySerial.write(both_stop);
-  }
-  Serial.println("First extreme checked");
-  if(roll < -15){
-    mySerial.write(axis2_up);
-    while(roll < -10){
-      getAngles();
-    }
-    mySerial.write(both_stop);
-  }
-  Serial.println("Second extreme checked");
-  if(pitch > 20){
-    mySerial.write(both_down);
-    while(pitch > 5){
-      getAngles();
-    }
-    mySerial.write(both_stop);
-  }
-  Serial.println("Third extreme checked");
-  if(pitch < -10){
-    mySerial.write(both_up);
-    while(pitch < -5){
-      getAngles();
-    }
-    mySerial.write(both_stop);
-  }
-  Serial.println("Four extreme checked");
-  while(home_status == 0){
+  home_status = mySerial.read();
+
+  while(home_status == 2){
+    checkExtremes();
     getAngles();
     while(abs(roll) > 0.5){
       rollHoming();
@@ -139,6 +142,7 @@ void loop() {
       Serial.println("Finished Roll"); // set the current position values to 0 degrees
       mySerial.write(both_stop);
       home_status = 1;
+      mySerial.write(home_status);
       }
   }
   Serial.println("Homing checked");

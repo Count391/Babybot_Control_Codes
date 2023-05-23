@@ -35,11 +35,13 @@ int axis2_up = 9;
 int both_down = 5;
 int both_up = 4;
 int both_stop = 3;
+int homed = 1;
+int initiate_home = 2;
 
 
 void setup() {
   //Buttons setup
-  Serial2.begin(9600);
+  Serial3.begin(9600);
   Serial.begin(9600);
   //Modbus Setup
   Ethernet.init(10);   // MKR ETH shield
@@ -67,126 +69,28 @@ void loop() {
     } else {
       Serial.println("Modbus TCP Client connected");
       enableAxes();
-      setVelLvl(3);
+      setVelLvl(2);
       setAngle(2);
       enableLimits();
+      clearModbusErr();
     }
   } else {
     
   }
 
 // Read Serial Comms from Uno (Inclinometer)
-//
-//
-//
-//
-//
-//while(!Serial2.available()){
-//    
-//  }
-//  incoming_data = Serial2.read();
-//  setVelocity(650);
-//  switch (incoming_data) {
-//    case axis1_down:
-//    jog(1,neg);
-//    break;
-//    case axis1_up:
-//    jog(1,pos);
-//    break;
-//    case axis2_down:
-//    jog(2,neg);
-//    break;
-//    case axis2_up:
-//    jog(2,pos);
-//    break;
-//    case both_up:
-//    jog(1,pos);
-//    delay(50);
-//    jog(2,pos);
-//    break;
-//    case both_down:
-//    jog(1,neg);
-//    delay(50);
-//    jog(2,neg);
-//    break;
-//    case both_stop:
-//    stopJog();
-//    break;
-//  }
-
-
-
-
-
-
-
-//  if(incoming_data == axis1_down){
-//    Serial.println("Axis 1 Down");
-//    //enableAxes(); 
-//    //delay(50);
-//    jog(1,neg);
-//  }
-//  else if(incoming_data == axis1_up){
-//    Serial.println("Axis 1 Up");
-//    //enableAxes();
-//    //delay(50);
-//    jog(1,pos);
-//  }
-//  else if(incoming_data == axis2_down){
-//    Serial.println("Axis 2 Down");
-//    //enableAxes();
-//    //delay(50);
-//    jog(2,neg);
-//  }
-//  else if(incoming_data == axis2_up){
-//    Serial.println("Axis 2 Up");
-//    //enableAxes();
-//    //delay(50);
-//    jog(2,pos);
-//  }
-//  else if(incoming_data == both_up){
-//    Serial.println("Both Up");
-//    //enableAxes();
-//    //delay(50);
-//    jog(1,pos);
-//    delay(50);
-//    jog(2,pos);
-//    Serial.println(incoming_data);
-//  }
-//  else if(incoming_data == both_down){
-//    Serial.println("Both Down");
-//    //enableAxes();
-//    //delay(50);
-//    jog(1,neg);
-//    delay(50);
-//    jog(2,neg);
-//  }
-//  else if(incoming_data == both_stop){
-//    Serial.println("Both Stop");
-//    stopJog();
-//  }
-
-  plyps.loop();
-  homebutton.loop();
-  if(plyps.isReleased()){
-    if(playstate == 1){
-     //stop motion
-    stopJog();
-    Serial.println("stopping motion");
-    playstate = 0; 
-    }
-    else {
-      //start motion
-    toggleMotion();
-    Serial.println("starting motion");
-    playstate = 1;
-    }
+  if(initiate_home == 2){
+    Serial3.write(initiate_home);  
+    Serial.println("Sending command to start home to Uno"); 
+    disableLimits();
   }
-  if(homebutton.isReleased()){
-    //go to zero
-    go2zeroDegrees();
-    Serial.println("going to 0");
+
+  while(incoming_data!=1) {
+    incoming_data = Serial3.read();
+    checkHomingMove();
   }
+  initiate_home = 1;
+  setCurrentPosZeroAngle();
 }
 
 
@@ -204,6 +108,34 @@ void setAngle(int lvl) {
   }
   else if (lvl == 3) {
     setLimits(-3000, 3000);
+  }
+}
+
+void checkHomingMove() {
+  if(incoming_data == axis1_down){
+    jog(1,pos); // Axis 1 Down
+  }
+  else if(incoming_data == axis1_up){
+    jog(1,neg); // Axis 1 Up
+  }
+  else if(incoming_data == axis2_down){
+    jog(2,pos); // Axis 2 Down
+  }
+  else if(incoming_data == axis2_up){
+    jog(2,neg); // Axis 2 Up
+  }
+  else if(incoming_data == both_up){
+    jog(1,pos); // Both Up
+    delay(50);
+    jog(2,pos);
+  }
+  else if(incoming_data == both_down){
+    jog(1,neg); // Both Down
+    delay(50);
+    jog(2,neg);
+  }
+  else if(incoming_data == both_stop){
+    stopJog(); // Both Stop
   }
 }
 
@@ -237,7 +169,7 @@ void setVelLvl(int lvl) {
     setVelocity(300);
   }
   else if (lvl == 3) {
-    setVelocity(6000);
+    setVelocity(500);
   }
 }
 
@@ -359,19 +291,35 @@ void stopJog() {
 }
 
 void disableLimits() {
-  int address = 106;
+  int address = 106;      // ACTION 13 & 14
   modbusTCPClient.holdingRegisterWrite(address - 1, 0);
   modbusTCPClient.holdingRegisterWrite(address, 0);
-  address = 122;
+  address = 122;          // ACTION 15 & 16
   modbusTCPClient.holdingRegisterWrite(address - 1, 0);
   modbusTCPClient.holdingRegisterWrite(address, 0);
+  address = 143;          // ACTION 25-28
+  modbusTCPClient.holdingRegisterWrite(address - 1, 0);
+  modbusTCPClient.holdingRegisterWrite(address, 0);
+  modbusTCPClient.holdingRegisterWrite(address + 1, 0);
+  modbusTCPClient.holdingRegisterWrite(address + 2, 0);
 }
 
 void enableLimits() {
-  int address = 106;
+  int address = 106;      // ACTION 13 & 14
   modbusTCPClient.holdingRegisterWrite(address - 1, 1);
   modbusTCPClient.holdingRegisterWrite(address, 1);
-  address = 122;
+  address = 122;          // ACTION 15 & 16
   modbusTCPClient.holdingRegisterWrite(address - 1, 1);
   modbusTCPClient.holdingRegisterWrite(address, 1);
+  address = 143;          // ACTION 25-28
+  modbusTCPClient.holdingRegisterWrite(address - 1, 1);
+  modbusTCPClient.holdingRegisterWrite(address, 1);
+  modbusTCPClient.holdingRegisterWrite(address + 1, 1);
+  modbusTCPClient.holdingRegisterWrite(address + 2, 1);
+}
+
+void clearModbusErr() {
+  int address = 1;      // MODBUS.CLRERRORS
+  modbusTCPClient.holdingRegisterWrite(address - 1, 1);
+  modbusTCPClient.holdingRegisterWrite(address - 1, 0);
 }
