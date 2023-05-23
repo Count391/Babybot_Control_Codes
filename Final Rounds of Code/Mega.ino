@@ -35,6 +35,11 @@ int axis2_up = 9;
 int both_down = 5;
 int both_up = 4;
 int both_stop = 3;
+int mode = 0;
+int axis;
+int spd;
+int limitp;
+int limitn;
 
 
 void setup() {
@@ -50,7 +55,7 @@ void setup() {
       delay(1); // do nothing, no point running without Ethernet hardware
     }
   }
-  if (Ethernet.linkStatus() == LinkOFF) {
+  if (Ethernet.linkStatus() == LinkOFF) { 
     Serial.println("Ethernet cable is not connected.");
   }
   plyps.setDebounceTime(50);
@@ -74,33 +79,67 @@ void loop() {
 
   incoming_data = Serial2.read();
   if(incoming_data/10 == 1) {
-    Serial.print("Speed is: ");
+    Serial.print("Axis is: ");
     Serial.println(incoming_data%10);
+    axis = incoming_data%10;
+    go2zeroDegrees();             // If the axis, angle or speed changes, go to zero
   }
   if(incoming_data/10 == 2) {
     Serial.print("Angle is: ");
     Serial.println(incoming_data%10);
+    setAngle(incoming_data%10);
+    go2zeroDegrees();
   }
   if(incoming_data/10 == 3) {
-    Serial.print("Axis is: ");
+    Serial.print("Speed is: ");
     Serial.println(incoming_data%10);
+    spd = incoming_data%10;
+    setVelLvl(spd);
   }
   if(incoming_data/10 == 4) {
-    Serial.print("Bounce is: ");
+    Serial.print("Mode is: ");
     Serial.println(incoming_data%10);
+    mode = incoming_data%10;
   }
   if(incoming_data == 52) {
     Serial.println("Start BabyBot");
+    if (axis == 0) {
+      //combined
+      Serial.println("Combined");
+      setComboVelLvl(spd);
+      toggleMotion(pos,neg);
+      // do more work here
+    }
+    else if (axis == 1) {
+      //pitch
+      Serial.println("Pitch");
+      setVelLvl(spd);
+      toggleMotion(pos,pos);
+    }
+    else {
+      // roll
+      Serial.println("Roll");
+      setVelLvl(spd);
+      toggleMotion(pos,neg);
+    }
   }
   if(incoming_data == 51) {
     Serial.println("Stop BabyBot");
+    stopJog();
+    delay(500);
+    stopJog();
+    delay(500);
+    stopJog();
   }
   if(incoming_data == 50) {
     Serial.println("BabyBot is off");
+    disableAxes();
   }
-  if(incoming_data == 100) {
-    Serial.println("BabyBot is paused");
+  if(incoming_data == 53) {
+    Serial.println("Home the BabyBot");
+    go2zeroDegrees();
   }
+
 
 //  if(incoming_data == axis1_down){
 //    Serial.println("Axis 1 Down");
@@ -156,19 +195,41 @@ void setAngle(int lvl) {
   // if level 1 use setLimits for predefined value
   // if level 2 ...
   // if level 3 ...
-  if (lvl == 1) {
-    setLimits(-500, 500);
-  }
-  else if (lvl == 2) {
-    setLimits(-1000, 1000);
-  }
-  else if (lvl == 3) {
-    setLimits(-3000, 3000);
+    switch (lvl) {
+    case 1:
+      setLimits(-250, 250);
+      break;
+    case 2:
+      setLimits(-500, 500);
+      break;
+    case 3:
+      setLimits(-750, 750);
+      break;
+    case 4:
+      setLimits(-1000, 1000);
+      break;
+    case 5:
+      setLimits(-1250, 1250);
+      break;
+    case 6:
+      setLimits(-1500, 1500);
+      break;
+    case 7:
+      setLimits(-1750, 1750);
+      break;
+    case 8:
+      setLimits(-2000, 2000);
+      break;
+    case 9:
+      setLimits(-2250, 2250);
+      break;
   }
 }
 
 //set limits
 void setLimits(int ln, int lp) {
+  limitp = lp;
+  limitn = ln;
   //AXIS 1 Limits
   //108-109 is upper limit
   int address = 108;
@@ -190,14 +251,34 @@ void setVelLvl(int lvl) {
   // if level 1 use setVelocity for predefined value
   // if level 2 ...
   // if level 3 ...
-  if (lvl == 1) {
-    setVelocity(200);
-  }
-  else if (lvl == 2) {
-    setVelocity(300);
-  }
-  else if (lvl == 3) {
-    setVelocity(6000);
+  switch (lvl) {
+    case 1:
+      setVelocity(250);
+      break;
+    case 2:
+      setVelocity(500);
+      break;
+    case 3:
+      setVelocity(750);
+      break;
+    case 4:
+      setVelocity(1000);
+      break;
+    case 5:
+      setVelocity(1250);
+      break;
+    case 6:
+      setVelocity(1500);
+      break;
+    case 7:
+      setVelocity(1750);
+      break;
+    case 8:
+      setVelocity(2000);
+      break;
+    case 9:
+      setVelocity(2250);
+      break;
   }
 }
 
@@ -220,6 +301,63 @@ void setVelocity(int vel) {
   int axis2 = 120;
   writeTwoRegisters(axis1, vel);
   writeTwoRegisters(axis2, vel);
+  enableActions();  // ACTIONS disable whenever a parameter is changed
+}
+
+void setComboVelLvl(int lvl) {
+  // if level 1 use setVelocity for predefined value
+  // if level 2 ...
+  // if level 3 ...
+  switch (lvl) {
+    case 1:
+      setComboVel(250);
+      break;
+    case 2:
+      setComboVel(500);
+      break;
+    case 3:
+      setComboVel(750);
+      break;
+    case 4:
+      setComboVel(1000);
+      break;
+    case 5:
+      setComboVel(1250);
+      break;
+    case 6:
+      setComboVel(1500);
+      break;
+    case 7:
+      setComboVel(1750);
+      break;
+    case 8:
+      setComboVel(2000);
+      break;
+    case 9:
+      setComboVel(2250);
+      break;
+  }
+}
+
+void setComboVel(int vel) {
+  //set velocity in ACTIONS(task parameters)
+  //action 13 = neg, 14 = pos for AXIS 1 (address 112-113, 114-115)
+  //action 15 = neg, 16 = pos for AXIS 2 (address 128-129, 130-131)
+  int axis1neg = 112;
+  int axis1pos = 114;
+  int axis2neg = 128;
+  int axis2pos = 130;
+  writeTwoRegisters(axis1neg, -vel*0.75);
+  writeTwoRegisters(axis1pos, vel*0.75);
+  writeTwoRegisters(axis2neg, -vel*0.48);
+  writeTwoRegisters(axis2pos, vel*0.48);
+  //set general JOG velocities
+  //AXIS1.JOG.V is at 118 and 119
+  //AXIS1.JOG.V is at 120 and 121
+  int axis1 = 118;
+  int axis2 = 120;
+  writeTwoRegisters(axis1, vel*0.75);
+  writeTwoRegisters(axis2, vel*0.68);
   enableActions();  // ACTIONS disable whenever a parameter is changed
 }
 
@@ -261,12 +399,12 @@ void jog(int axis, dir pn) { // will need to specify which axis and pos/neg
   modbusTCPClient.holdingRegisterWrite(address - 1, 0);
 }
 
-int actionRunning() {
+long actionRunning() {
   int address1 = 104;
   int address2 = 105;
-  int data1 = modbusTCPClient.holdingRegisterRead(address1);
-  int data2 = modbusTCPClient.holdingRegisterRead(address2);
-  int result = (data1 << 16) + data2;
+  long data1 = modbusTCPClient.holdingRegisterRead(address1);
+  long data2 = modbusTCPClient.holdingRegisterRead(address2);
+  long result = (data1 << 16) + data2;
   return result;
 }
 
@@ -287,11 +425,18 @@ void enableActions() { //should only need to do this once at start
   modbusTCPClient.holdingRegisterWrite(address, 1);
 }
 
-void toggleMotion(){
+void toggleMotion(dir a1, dir a2){
   enableAxes();
   delay(50);
-  jog(1,pos);
-  jog(2,neg);
+  jog(1,a1);
+  jog(2,a2);
+}
+
+void continueMotion() {
+  long pos1 = positionFeedback1();
+  long pos2 = positionFeedback2();
+
+
 }
 
 void go2zeroDegrees() {
@@ -334,4 +479,36 @@ void enableLimits() {
   address = 122;
   modbusTCPClient.holdingRegisterWrite(address - 1, 1);
   modbusTCPClient.holdingRegisterWrite(address, 1);
+}
+
+long positionFeedback1() {
+  int address = 139;
+  long data1 = modbusTCPClient.holdingRegisterRead(address - 1);
+  long data2 = modbusTCPClient.holdingRegisterRead(address);
+  long result = (data1 << 16) + data2;
+  return result/1000;
+}
+
+long positionFeedback2() {
+  int address = 141;
+  long data1 = modbusTCPClient.holdingRegisterRead(address - 1);
+  long data2 = modbusTCPClient.holdingRegisterRead(address);
+  long result = (data1 << 16) + data2;
+  return result/1000;
+}
+
+void checkPos(){
+  if (limitp - positionFeedback1() < 240)  {
+    // axis 1 is close to positive limit, start negative
+      dir axis1 = neg;
+    }
+    if (limitp - positionFeedback2() < 240)  {
+      dir axis2 = neg;
+    }
+    if (limitn - positionFeedback1() > -240)  {
+      dir axis1 = neg;
+    }
+    if (limitn - positionFeedback2() > -240)  {
+      dir axis2 = neg;
+    }
 }
