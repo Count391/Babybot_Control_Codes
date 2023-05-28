@@ -13,11 +13,11 @@ SoftwareSerial mySerial = SoftwareSerial(rxPin, txPin);
 Adafruit_AlphaNum4 alpha4 = Adafruit_AlphaNum4();
 
 //Assign pins
-ezButton power(7);  // Power
-ezButton play(10);  // Play/Pause
+ezButton power(10);  // Power
+ezButton play(11);  // Play/Pause
 ezButton bounce(5); // Bounce Toggle
-ezButton motion(9);   // Baby/Auto Mode
-ezButton axis(11);  // Toggle 3 axis choices
+ezButton motion(7);   // Baby/Auto Mode
+ezButton axis(9);  // Toggle 3 axis choices
 ezButton timer(12); // Timer press in
 //Assign Pin numbers
 #define speed_DT A5
@@ -37,7 +37,7 @@ ezButton timer(12); // Timer press in
 // Initializing variables
 boolean powerInd = 1;
 boolean pauseInd = 1;
-int pauseTime = 0;
+long pauseTime = 0; 
 int timer_state = 0;  //Crono = 1, stopwatch = 0
 int outputAngleValue = 1;
 int outputSpeedValue = 1;
@@ -207,6 +207,7 @@ void emptyLed(){
 // Setup function
 void setup() {
   mySerial.begin(9600);
+  delay(2000);
   alpha4.begin(0x70);
   power.setDebounceTime(50); // set debounce time to 50 milliseconds
   play.setDebounceTime(50);
@@ -323,10 +324,9 @@ void loop() {
     }
   }else{
     mySerial.write(50);
-    mySerial.write(31);
-    mySerial.write(21);
     powerInd = 1;
-    emptyLed();
+    alpha4.clear();
+    alpha4.writeDisplay();
     targetTime = 0;
     outputSpeedValue = 1;
     outputAngleValue = 1;
