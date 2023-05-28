@@ -289,7 +289,7 @@ void loop() {
       lastStateTimeCLK = digitalRead(time_CLK);
       outputAngleValue = outputAngleValue + angleDir;     //Change the output values
       outputSpeedValue = outputSpeedValue + speedDir;
-      duration = duration + timeDir * 30;
+      duration = (duration / 60 + timeDir) * 60;
       outputAngleValue = AngSpdBoundaryCheck(outputAngleValue);
       outputSpeedValue = AngSpdBoundaryCheck(outputSpeedValue);
       duration = durationBoundaryCheck(duration);
