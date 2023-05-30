@@ -45,7 +45,7 @@ boolean powerState = 0;
 boolean startState = 0;
 int axisState = 0; //0 for combined, 1 for roll, 2 for pitch
 boolean motionState = 0; //0 for auto mode, 1 for baby mode
-int duration = 845;
+int duration = 900;
 boolean speedRotaryState = 0;
 boolean angleRotaryState = 0;
 boolean timeRotaryState = 0;
@@ -312,10 +312,14 @@ void loop() {
         }
       }
       if (timer.isReleased()){                            //Flip timer direction once timer knob is pushed
-        timerDir = (-1) * timerDir;
-        timerReset = 0;
+        if (timerDir == -1){
+          timerDir = 1;
+          duration = 0;
+        }else{
+          timerDir = -1;
+        }
       }
-      if (!(timer.getState()) && timerReset == 0){        //Reset timer to 0 when hold for 2.5s
+      if (!(timer.getState())){        //Reset timer to 0 when hold for 2.5s
         timerReset = millis() + 2500;
       }else if (!(timer.getState()) && timerReset < millis()){
         duration = 0;
@@ -336,7 +340,7 @@ void loop() {
     outputSpeedValue = 1;
     outputAngleValue = 1;
     startState = 0;
-    duration = 845;
+    duration = 900;
     digitalWrite(ledPin, LOW);
     ledRegister = 0;
     digitalWrite(latchPin, LOW);
@@ -346,7 +350,7 @@ void loop() {
   if (timerDir == -1 && duration < 0){
     mySerial.write(52);
     startState = 0;
-    duration = 845;
+    duration = 900;
   }else if (timerDir == 1 && duration >= 5998){
     startState = 0;
   }
