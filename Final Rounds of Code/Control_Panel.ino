@@ -289,7 +289,9 @@ void loop() {
       lastStateTimeCLK = digitalRead(time_CLK);
       outputAngleValue = outputAngleValue + angleDir;     //Change the output values
       outputSpeedValue = outputSpeedValue + speedDir;
-      duration = (duration / 60 + timeDir) * 60;
+      if (timeDir != 0){
+        duration = (duration / 60 + timeDir) * 60;
+      }
       outputAngleValue = AngSpdBoundaryCheck(outputAngleValue);
       outputSpeedValue = AngSpdBoundaryCheck(outputSpeedValue);
       duration = durationBoundaryCheck(duration);
@@ -339,6 +341,7 @@ void loop() {
     digitalWrite(latchPin, HIGH);
   }
   if (timerDir == -1 && duration < 0){
+    mySerial.write(52);
     startState = 0;
     duration = 845;
   }else if (timerDir == 1 && duration >= 5998){
