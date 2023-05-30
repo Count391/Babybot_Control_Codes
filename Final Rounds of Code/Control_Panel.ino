@@ -302,11 +302,12 @@ void loop() {
       if (displayLetterTime < millis() && pauseTime < millis()){                  //Display time if no recent change in angle and speed
         if (pauseInd){
           ledDisplay(duration);
+          pauseTime = millis() + 1000;
         }else{
           emptyLed();
+          pauseTime = millis() + 200;
         }
         pauseInd = !pauseInd;
-        pauseTime = millis() + 1000;
       }
       if (timer.isReleased()){                            //Flip timer direction once timer knob is pushed
         timerDir = (-1) * timerDir;
