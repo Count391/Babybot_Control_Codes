@@ -36,8 +36,8 @@ ezButton timer(12); // Timer press in
 
 // Initializing variables
 boolean powerInd = 1;
-boolean pauseInd = 1;
-long pauseTime = 0; 
+long durationDisplayTime = 0; 
+int darkTime = 0;
 int timer_state = 0;  //Crono = 1, stopwatch = 0
 int outputAngleValue = 1;
 int outputSpeedValue = 1;
@@ -86,6 +86,7 @@ boolean currentStateCLK = digitalRead(CLK);
 
 byte smallLed(int speedValue, int angleValue, int axis){
   int ledRegister = 0;
+  bitSet(ledRegister, 4);
   if (speedValue > 3){
     bitSet(ledRegister, 3);
   }
@@ -299,15 +300,16 @@ void loop() {
         displayLetterTime = millis() + 3000;
         letterDisplay(angleDir, speedDir, outputAngleValue, outputSpeedValue);
       }
-      if (displayLetterTime < millis() && pauseTime < millis()){                  //Display time if no recent change in angle and speed
-        if (pauseInd){
+      if (displayLetterTime < millis()){                  //Display time if no recent change in angle and speed
+        if (durationDisplayTime > millis()){
           ledDisplay(duration);
-          pauseTime = millis() + 1000;
         }else{
           emptyLed();
-          pauseTime = millis() + 200;
+          darkTime = millis() - durationDisplayTime;
+          if (darkTime > 200){
+            durationDisplayTime = millis() + 1000;
+          }
         }
-        pauseInd = !pauseInd;
       }
       if (timer.isReleased()){                            //Flip timer direction once timer knob is pushed
         timerDir = (-1) * timerDir;
