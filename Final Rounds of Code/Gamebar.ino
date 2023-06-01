@@ -22,8 +22,6 @@ SoftwareSerial mySerial = SoftwareSerial(rxPin, txPin);
 
 ezButton button1(7); // Green
 ezButton button2(2); // Red
-ezButton button3(A0); // Blue
-ezButton button4(A3); // Yellow
 
 int currentLED = 1;
 int nextLED;
@@ -89,8 +87,7 @@ void printDirectory(File dir, int numTabs) {
 void gameResp(){
   if (buttonPressed == 0){
     return;
-  }
-  if(buttonPressed == currentLED){
+  }else if(buttonPressed == currentLED){
     mySerial.write(10);
     digitalWrite(pinNumberOutput[currentLED-1],LOW); 
     newLED(); 
@@ -98,10 +95,9 @@ void gameResp(){
     Serial.print("Next Button:");
     Serial.println(currentLED);
     musicPlayer.playFullFile("/correct.mp3");
-  }
-  if(buttonPressed != currentLED){
+  }else if(buttonPressed != currentLED){
     mySerial.write(11);
-    musicPlayer.playFullFile("/wrong.mp3");
+    musicPlayer.startPlayingFile("/bgm.mp3");
     currentTimer = millis();
     if(currentTimer - lastToggle > 1000){  
       Serial.print("Wrong Button, Press ");
@@ -118,6 +114,8 @@ void gameResp(){
 
 void setup() {
   Serial.begin(9600);
+  pinMode(A0, INPUT_PULLUP);
+  pinMode(A3, INPUT_PULLUP);
 
   while (! musicPlayer.begin()) { // initialise the music player
      Serial.println(F("Couldn't find VS1053, do you have the right pins defined?"));
@@ -148,20 +146,20 @@ void setup() {
   pinMode(ledPin4,OUTPUT);
 
   button1.setDebounceTime(50);
-  button2.setDebounceTime(50);
-  button3.setDebounceTime(50);
-  button4.setDebounceTime(50);
+  button2.setDebounceTime(50); 
+  button3.setDebounceTime(250);
+  button4.setDebounceTime(250);
 
-  Serial.begin(9600);
+  //Serial.begin(9600);
   Serial.print("Next button: ");
   Serial.println(currentLED);
   digitalWrite(pinNumberOutput[currentLED-1],HIGH);
 }
 
 void loop() {
-  if (musicPlayer.stopped()) {
-    musicPlayer.playFullFile("\bgm.mp3");
-  }
+//  if (musicPlayer.stopped()) {
+//    musicPlayer.playFullFile("\bgm.mp3");
+//  }
   
   button1.loop();
   button2.loop();
@@ -170,12 +168,16 @@ void loop() {
   
   if (button1.isPressed()){
     buttonPressed = 1;
+    Serial.println("Button 1 Pressed");
   }else if(button2.isPressed()){
     buttonPressed = 2;
-  }else if(button3.isPressed()){
+    Serial.println("Button 2 Pressed");
+  }else if(!(digitalRead(A0)){
     buttonPressed = 3;
-  }else if(button4.isPressed()){
+    Serial.println("Button 3 Pressed");
+  }else if(!(digitalRead(A3)){
     buttonPressed = 4;
+    Serial.println("Button 4 Pressed");
   }
 
   gameResp();
