@@ -91,6 +91,7 @@ void gameResp(){
     return;
   }
   if(buttonPressed == currentLED){
+    mySerial.write(10);
     digitalWrite(pinNumberOutput[currentLED-1],LOW); 
     newLED(); 
     digitalWrite(pinNumberOutput[currentLED-1],HIGH); 
@@ -99,6 +100,7 @@ void gameResp(){
     musicPlayer.playFullFile("/correct.mp3");
   }
   if(buttonPressed != currentLED){
+    mySerial.write(11);
     musicPlayer.playFullFile("/wrong.mp3");
     currentTimer = millis();
     if(currentTimer - lastToggle > 1000){  
@@ -111,6 +113,7 @@ void gameResp(){
       count = 0;
     }
   }
+  buttonPressed = 0;
 }
 
 void setup() {
@@ -165,11 +168,6 @@ void loop() {
   button3.loop();
   button4.loop();
   
-  int btn1State = button1.getState();
-  int btn2State = button2.getState();
-  int btn3State = button3.getState();
-  int btn4State = button4.getState();
-
   if (button1.isPressed()){
     buttonPressed = 1;
   }else if(button2.isPressed()){
