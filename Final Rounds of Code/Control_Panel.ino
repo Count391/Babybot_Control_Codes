@@ -353,5 +353,6 @@ void loop() {
     duration = 900;
   }else if (timerDir == 1 && duration >= 5998){
     startState = 0;
+    mySerial.write(52);
   }
 }
