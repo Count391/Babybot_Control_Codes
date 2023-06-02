@@ -4,8 +4,8 @@
 #include <SD.h>
 #include <SoftwareSerial.h>
 
-#define rxPin 0
-#define txPin 1
+#define rxPin 5
+#define txPin 6
 #define ledPin1 A5 // Green
 #define ledPin2 A4 // Red
 #define ledPin3 A2 // Blue
@@ -95,9 +95,11 @@ void gameResp(){
     Serial.print("Next Button:");
     Serial.println(currentLED);
     musicPlayer.playFullFile("/correct.mp3");
+    Serial.println("Playing correct sound");
   }else if(buttonPressed != currentLED){
     mySerial.write(11);
-    musicPlayer.startPlayingFile("/bgm.mp3");
+    musicPlayer.playFullFile("/wrong.mp3");
+    Serial.println("Playing wrong music");
     currentTimer = millis();
     if(currentTimer - lastToggle > 1000){  
       Serial.print("Wrong Button, Press ");
@@ -147,8 +149,7 @@ void setup() {
 
   button1.setDebounceTime(50);
   button2.setDebounceTime(50); 
-  button3.setDebounceTime(250);
-  button4.setDebounceTime(250);
+
 
   //Serial.begin(9600);
   Serial.print("Next button: ");
@@ -157,14 +158,13 @@ void setup() {
 }
 
 void loop() {
-//  if (musicPlayer.stopped()) {
-//    musicPlayer.playFullFile("\bgm.mp3");
-//  }
+  if (musicPlayer.stopped()) {
+    musicPlayer.startPlayingFile("/bgm.mp3");
+    Serial.println("Playing bg music");
+  }
   
   button1.loop();
   button2.loop();
-  button3.loop();
-  button4.loop();
   
   if (button1.isPressed()){
     buttonPressed = 1;
@@ -172,11 +172,13 @@ void loop() {
   }else if(button2.isPressed()){
     buttonPressed = 2;
     Serial.println("Button 2 Pressed");
-  }else if(!(digitalRead(A0)){
+  }else if(!(digitalRead(A0))){
     buttonPressed = 3;
+    delay(250);
     Serial.println("Button 3 Pressed");
-  }else if(!(digitalRead(A3)){
+  }else if(!(digitalRead(A3))){
     buttonPressed = 4;
+    delay(250);
     Serial.println("Button 4 Pressed");
   }
 
