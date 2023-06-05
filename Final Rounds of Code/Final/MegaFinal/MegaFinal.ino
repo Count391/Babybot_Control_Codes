@@ -22,6 +22,9 @@ int playstate = 1;
 
 // Initialize variables for incoming data
 int incoming_data;
+int GB_data;
+int motionStartTime;
+int motionToggle = 0;
 int axis1_down = 7;
 int axis1_up = 6;
 int axis2_down = 8;
@@ -31,6 +34,7 @@ int both_up = 4;
 int both_stop = 3;
 int homed = 1;
 int initiate_home = 2;
+int startGB = 0;
 int mode = 0;
 int axis;
 int spd;
@@ -40,11 +44,11 @@ int limitn;
 
 void setup() {
   //Buttons setup
-  //Serial1.begin(9600);  // This is for the gamebar
+  Serial1.begin(9600);  // This is for the gamebar
   Serial2.begin(9600);  // This is for the control panel
   Serial3.begin(9600);  // This is for the tilt sensor
   Serial.begin(9600);
-  delay(20000);
+  //delay(20000);
   //Modbus Setup
   Ethernet.init(10);   // MKR ETH shield
   Ethernet.begin(mac, ip);
@@ -76,6 +80,7 @@ void loop() {
   }
 
   incoming_data = Serial2.read();
+  GB_data = Serial1.read();
   if(initiate_home == 2) {            // If the control panel sends command to find home
     Serial3.write(initiate_home);
     Serial.println("Sending command to start home to Uno"); 
@@ -116,10 +121,15 @@ void loop() {
     Serial.print("Mode is: ");
     Serial.println(incoming_data%10);
     mode = incoming_data%10;
+    go2zeroDegrees();
   }
   if(incoming_data == 52) {
     Serial.println("Start BabyBot");
-    if (axis == 0) {
+    if (mode == 1) {
+      startGB = 1;
+      Serial.println("Gamebar ON");
+    }
+    else if (axis == 0) {
       //combined
       Serial.println("Combined");
       setComboVelLvl(spd);
@@ -132,7 +142,7 @@ void loop() {
       setVelLvl(spd);
       toggleMotion(pos,pos);
     }
-    else {
+    else if (axis == 2) {
       // roll
       Serial.println("Roll");
       setVelLvl(spd);
@@ -146,16 +156,34 @@ void loop() {
     stopJog();
     delay(500);
     stopJog();
+    startGB = 0;
   }
   if(incoming_data == 50) {
     Serial.println("BabyBot is off");
     disableAxes();
+    startGB = 0;
   }
   if(incoming_data == 53) {
     Serial.println("Home the BabyBot");
     go2zeroDegrees();
   }
-
+  if(startGB == 1) {
+    if(GB_data == 42) {     // The correct Gamebar button was pressed
+      toggleMotion(pos,neg);
+      motionStartTime = millis();
+      motionToggle = 1;
+    }
+    else if(GB_data == 43){ // The incorrect Gamebar button was pressed
+      toggleMotion(pos,pos);
+      delay(600);
+      go2zeroDegrees();
+    }
+  }
+  if(motionToggle == 1 && motionStartTime - millis() > 3000) {   // This gives a gamebar motion for 3 sec after correct button is pushed
+    stopJog();
+    go2zeroDegrees();
+    motionToggle = 0;
+  }
 }
 //
 //
