@@ -48,7 +48,7 @@ void setup() {
   Serial2.begin(9600);  // This is for the control panel
   Serial3.begin(9600);  // This is for the tilt sensor
   Serial.begin(9600);
-  //delay(20000);
+  delay(20000);
   //Modbus Setup
   Ethernet.init(10);   // MKR ETH shield
   Ethernet.begin(mac, ip);
