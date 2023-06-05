@@ -96,7 +96,7 @@ void gameResp(){
   if (buttonPressed == 0){
     return;
   }else if(buttonPressed == currentLED){
-    mySerial.write(10);
+    mySerial.write(42);
     musicPlayer.stopPlaying();
     digitalWrite(pinNumberOutput[currentLED-1],LOW); 
     newLED(); 
@@ -105,7 +105,7 @@ void gameResp(){
     Serial.println(currentLED);
     musicPlayer.startPlayingFile("/correct.mp3");
   }else if(buttonPressed != currentLED){
-    mySerial.write(11);
+    mySerial.write(43);
     musicPlayer.stopPlaying();
     musicPlayer.startPlayingFile("/wrong.mp3");
     currentTimer = millis();
