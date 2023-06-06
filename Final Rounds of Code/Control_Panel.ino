@@ -37,7 +37,7 @@ ezButton timer(12); // Timer press in
 // Initializing variables
 boolean powerInd = 1;
 long durationDisplayTime = 0; 
-int darkTime = 0;
+long darkTime = 0;
 int timer_state = 0;  //Crono = 1, stopwatch = 0
 int outputAngleValue = 1;
 int outputSpeedValue = 1;
