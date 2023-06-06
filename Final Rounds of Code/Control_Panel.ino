@@ -249,6 +249,9 @@ void loop() {
 
   if (powerInd && powerState){
     welcome();
+    mySerial.write(31);
+    mySerial.write(21);
+    mySerial.write(10);
     powerInd = !powerInd;
   }
 
@@ -348,11 +351,11 @@ void loop() {
     digitalWrite(latchPin, HIGH);
   }
   if (timerDir == -1 && duration < 0){
-    mySerial.write(51);
+    mySerial.write(53);
     startState = 0;
     duration = 900;
   }else if (timerDir == 1 && duration >= 5998){
     startState = 0;
-    mySerial.write(51);
+    mySerial.write(53);
   }
 }
