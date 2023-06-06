@@ -348,11 +348,11 @@ void loop() {
     digitalWrite(latchPin, HIGH);
   }
   if (timerDir == -1 && duration < 0){
-    mySerial.write(52);
+    mySerial.write(51);
     startState = 0;
     duration = 900;
   }else if (timerDir == 1 && duration >= 5998){
     startState = 0;
-    mySerial.write(52);
+    mySerial.write(51);
   }
 }
